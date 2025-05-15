@@ -20,7 +20,7 @@ import { EventsController } from './events.controller';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            port: configService.get('USER_SERVICE_PORT', 3000),
+            port: configService.get('USER_SERVICE_PORT', 3001),
           },
         }),
         inject: [ConfigService],
@@ -30,7 +30,7 @@ import { EventsController } from './events.controller';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            port: configService.get('EVENT_SERVICE_PORT', 3001),
+            port: configService.get('EVENT_SERVICE_PORT', 3002),
           },
         }),
         inject: [ConfigService],
