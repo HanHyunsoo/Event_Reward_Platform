@@ -17,6 +17,13 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
-    "paths": {}
+    "paths": {
+      "@event-reward-platform/protocol": [
+        "libs/protocol/src"
+      ],
+      "@event-reward-platform/protocol/*": [
+        "libs/protocol/src/*"
+      ]
+    }
   }
 }

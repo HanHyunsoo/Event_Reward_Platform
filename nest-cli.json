@@ -28,6 +28,15 @@
         "tsConfigPath": "apps/events/tsconfig.app.json"
       }
     },
+    "protocol": {
+      "type": "library",
+      "root": "libs/protocol",
+      "entryFile": "index",
+      "sourceRoot": "libs/protocol/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/protocol/tsconfig.lib.json"
+      }
+    },
     "users": {
       "type": "application",
       "root": "apps/users",
