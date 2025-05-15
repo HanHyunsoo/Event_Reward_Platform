@@ -3,20 +3,41 @@ import { ApiGatewayController } from './api-gateway.controller';
 import { ApiGatewayService } from './api-gateway.service';
 import { ClientsModule } from '@nestjs/microservices';
 import { Transport } from '@nestjs/microservices';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UsersController } from './users.controller';
+import { EventsController } from './events.controller';
 
 @Module({
   imports: [
-    ClientsModule.register([
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env'],
+    }),
+
+    ClientsModule.registerAsync([
       {
         name: 'USERS_SERVICE',
-        transport: Transport.TCP,
-        options: {
-          port: parseInt(process.env.USER_SERVICE_PORT || '3000'),
-        },
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            port: configService.get('USER_SERVICE_PORT', 3000),
+          },
+        }),
+        inject: [ConfigService],
+      },
+      {
+        name: 'EVENTS_SERVICE',
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            port: configService.get('EVENT_SERVICE_PORT', 3001),
+          },
+        }),
+        inject: [ConfigService],
       },
     ]),
   ],
-  controllers: [ApiGatewayController],
+  controllers: [ApiGatewayController, UsersController, EventsController],
   providers: [ApiGatewayService],
 })
 export class ApiGatewayModule {}

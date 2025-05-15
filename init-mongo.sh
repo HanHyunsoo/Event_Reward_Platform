@@ -2,24 +2,26 @@
 set -e
 
 mongosh <<EOF
+
 use admin
 
 db.createUser({
-  user: "${USER_SERVICE_USERNAME}",
-  pwd: "${USER_SERVICE_PASSWORD}",
-  roles: [{ role: "readWrite", db: "${USER_SERVICE_DATABASE}" }]
+  user: "user",
+  pwd: "user",
+  roles: [{ role: "readWrite", db: "user_service" }]
 })
 
 db.createUser({
-  user: "${EVENT_SERVICE_USERNAME}",
-  pwd: "${EVENT_SERVICE_PASSWORD}",
-  roles: [{ role: "readWrite", db: "${EVENT_SERVICE_DATABASE}" }]
+  user: "event",
+  pwd: "event",
+  roles: [{ role: "readWrite", db: "event_service" }]
 })
 
-use ${USER_SERVICE_DATABASE}
-db.createCollection("users")
-
-use ${EVENT_SERVICE_DATABASE}
-db.createCollection("events")
+use user_service
+db.users.insertOne({
+    "username": "admin",
+    "password": "admin",
+    "role": "ADMIN"
+})
 
 EOF

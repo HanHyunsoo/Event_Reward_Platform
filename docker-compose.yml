@@ -1,27 +1,71 @@
 services:
-  mongodb:
+  mongo1:
     image: mongo:latest
+    hostname: mongo1
+    container_name: mongo1
     restart: always
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=example
-      - USER_SERVICE_DATABASE=${USER_SERVICE_DATABASE}
-      - USER_SERVICE_USERNAME=${USER_SERVICE_USERNAME}
-      - USER_SERVICE_PASSWORD=${USER_SERVICE_PASSWORD}
-      - EVENT_SERVICE_DATABASE=${EVENT_SERVICE_DATABASE}
-      - EVENT_SERVICE_USERNAME=${EVENT_SERVICE_USERNAME}
-      - EVENT_SERVICE_PASSWORD=${EVENT_SERVICE_PASSWORD}
     ports:
       - 27017:27017
     volumes:
-      - mongodb_data:/data/db
+      - mongo1-data:/data/db
+      - ./mongodb.key:/etc/mongodb.key
       - ./init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
+    command: 'mongod --replSet replDb --keyFile /etc/mongodb.key --bind_ip_all'
     networks:
-      - app-network
+      - mongo-cluster
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+    healthcheck:
+      test: test $$(mongosh -u root -p root --quiet --eval "rs.initiate({_id:\"replDb\",members:[{_id:0,host:\"mongo1\"},{_id:1,host:\"mongo2\"},{_id:2,host:\"mongo3\"}]}).ok || rs.status().ok") -eq 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-volumes:
-  mongodb_data:
+  mongo2:
+    image: mongo:latest
+    hostname: mongo2
+    container_name: mongo2
+    restart: always
+    depends_on:
+      - mongo1
+    ports:
+      - 27018:27017
+    volumes:
+      - mongo2-data:/data/db
+      - ./mongodb.key:/etc/mongodb.key
+    command: 'mongod --replSet replDb --keyFile /etc/mongodb.key --bind_ip_all'
+    networks:
+      - mongo-cluster
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+
+  mongo3:
+    image: mongo:latest
+    hostname: mongo3
+    container_name: mongo3
+    restart: always
+    depends_on:
+      - mongo2
+    ports:
+      - 27019:27017
+    volumes:
+      - mongo3-data:/data/db
+      - ./mongodb.key:/etc/mongodb.key
+    command: 'mongod --replSet replDb --keyFile /etc/mongodb.key --bind_ip_all'
+    networks:
+      - mongo-cluster
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
 
 networks:
-  app-network:
+  mongo-cluster:
     driver: bridge
+
+volumes:
+  mongo1-data:
+  mongo2-data:
+  mongo3-data:
