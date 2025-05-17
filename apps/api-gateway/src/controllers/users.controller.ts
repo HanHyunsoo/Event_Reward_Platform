@@ -9,11 +9,14 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import {
   CreateOrLoginUserRequestDto,
+  Role,
   TokenDto,
   USER_PATTERNS,
   UpdateUserRequestDto,
@@ -21,6 +24,9 @@ import {
   UserDto,
 } from '@event-reward-platform/protocol';
 import { Request, Response } from 'express';
+import { RoleGuard } from '../auth/role.guard';
+import { JwtGuard } from '../auth/jwt.guard';
+import { Roles } from '../decorators/roles.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -87,6 +93,10 @@ export class UsersController {
       refreshToken: (req.cookies as Record<string, string>).refreshToken ?? '',
     };
 
+    if (tokenDto.accessToken === '' || tokenDto.refreshToken === '') {
+      throw new UnauthorizedException('토큰이 존재하지 않습니다.');
+    }
+
     const newTokenDto = await firstValueFrom<TokenDto>(
       this.userClient.send(USER_PATTERNS.REFRESH_TOKEN, tokenDto),
     );
@@ -104,6 +114,8 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtGuard, RoleGuard)
+  @Roles(Role.ADMIN)
   async updateUser(
     @Param('id') id: string,
     @Body() body: UpdateUserRequestDto,

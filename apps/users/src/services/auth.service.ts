@@ -10,6 +10,10 @@ import { RpcException } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
 import { Model } from 'mongoose';
+import {
+  AccessTokenPayload,
+  RefreshTokenPayload,
+} from '@event-reward-platform/core';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +25,7 @@ export class AuthService {
 
   generateAccessToken(userId: string, role: Role): string {
     const accessToken = this.jwtService.sign(
-      { userId, role },
+      { userId, role } as AccessTokenPayload,
       { expiresIn: '5m' },
     );
 
@@ -30,7 +34,7 @@ export class AuthService {
 
   generateRefreshToken(userId: string): string {
     const refreshToken = this.jwtService.sign(
-      { userId },
+      { userId } as RefreshTokenPayload,
       {
         secret: this.configService.get('JWT_REFRESH_SECRET_KEY'),
         expiresIn: '7d',
@@ -43,7 +47,7 @@ export class AuthService {
   async refreshAccessToken(tokenDto: TokenDto): Promise<TokenDto> {
     const decodeRefreshToken = (refreshToken: string) => {
       try {
-        return this.jwtService.verify<{ userId: string }>(refreshToken, {
+        return this.jwtService.verify<RefreshTokenPayload>(refreshToken, {
           secret: this.configService.get('JWT_REFRESH_SECRET_KEY'),
         });
       } catch (error) {
@@ -55,18 +59,12 @@ export class AuthService {
 
     const decodedRefreshToken = decodeRefreshToken(tokenDto.refreshToken);
 
-    const decodeAccessToken = (
-      accessToken: string,
-    ): { userId: string; role: Role } => {
+    const decodeAccessToken = (accessToken: string): AccessTokenPayload => {
       try {
-        return this.jwtService.verify<{ userId: string; role: Role }>(
-          accessToken,
-        );
+        return this.jwtService.verify<AccessTokenPayload>(accessToken);
       } catch (error) {
         if (error instanceof TokenExpiredError) {
-          return this.jwtService.decode<{ userId: string; role: Role }>(
-            accessToken,
-          );
+          return this.jwtService.decode<AccessTokenPayload>(accessToken);
         }
 
         throw new RpcException(
