@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Inject,
   Post,
+  Req,
   Res,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
@@ -14,7 +15,7 @@ import {
   TokenDto,
   USER_PATTERNS,
 } from '@event-reward-platform/protocol';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 @Controller('users')
 export class UsersController {
@@ -67,6 +68,32 @@ export class UsersController {
     });
 
     res.setHeader('Authorization', `Bearer ${accessToken}`);
+
+    return res.status(HttpStatus.OK).send();
+  }
+
+  @Post('refresh-token')
+  async refreshToken(
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<Response> {
+    const tokenDto: TokenDto = {
+      accessToken: req.headers.authorization?.split(' ')[1] ?? '',
+      refreshToken: (req.cookies as Record<string, string>).refreshToken ?? '',
+    };
+
+    const newTokenDto = await firstValueFrom<TokenDto>(
+      this.userClient.send(USER_PATTERNS.REFRESH_TOKEN, tokenDto),
+    );
+
+    res.cookie('refreshToken', newTokenDto.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.setHeader('Authorization', `Bearer ${newTokenDto.accessToken}`);
 
     return res.status(HttpStatus.OK).send();
   }
