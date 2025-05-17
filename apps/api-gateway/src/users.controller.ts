@@ -4,6 +4,8 @@ import {
   Get,
   HttpStatus,
   Inject,
+  Param,
+  Patch,
   Post,
   Req,
   Res,
@@ -14,6 +16,9 @@ import {
   CreateOrLoginUserRequestDto,
   TokenDto,
   USER_PATTERNS,
+  UpdateUserRequestDto,
+  UpdateUserResponseDto,
+  UserDto,
 } from '@event-reward-platform/protocol';
 import { Request, Response } from 'express';
 
@@ -96,5 +101,22 @@ export class UsersController {
     res.setHeader('Authorization', `Bearer ${newTokenDto.accessToken}`);
 
     return res.status(HttpStatus.OK).send();
+  }
+
+  @Patch(':id')
+  async updateUser(
+    @Param('id') id: string,
+    @Body() body: UpdateUserRequestDto,
+  ): Promise<UpdateUserResponseDto> {
+    const userDto: UserDto = {
+      userId: id,
+      role: body.role,
+    };
+
+    const user = await firstValueFrom<UserDto>(
+      this.userClient.send(USER_PATTERNS.UPDATE_USER, userDto),
+    );
+
+    return { user };
   }
 }

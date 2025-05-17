@@ -1,9 +1,9 @@
 import {
   Catch,
   HttpException,
+  InternalServerErrorException,
   Logger,
   RpcExceptionFilter,
-  InternalServerErrorException,
 } from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
 import { RpcException } from '@nestjs/microservices';
