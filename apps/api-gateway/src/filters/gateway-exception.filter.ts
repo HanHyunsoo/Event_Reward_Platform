@@ -8,8 +8,14 @@ import {
 import { HttpAdapterHost } from '@nestjs/core';
 
 interface IRpcException {
-  status?: number;
-  message?: string;
+  message: string;
+  name: string;
+  response: {
+    error: string;
+    message: string | string[];
+    statusCode: number;
+  };
+  status: number;
 }
 
 @Catch()
@@ -22,7 +28,7 @@ export class GatewayExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
 
     const httpStatus = exception.status ?? HttpStatus.INTERNAL_SERVER_ERROR;
-    const message = exception.message ?? 'Unknown error';
+    const message = exception?.response?.message ?? 'Unknown error';
 
     const responseBody = {
       timestamp: Date.now(),
