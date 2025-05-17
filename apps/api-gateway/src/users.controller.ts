@@ -10,7 +10,7 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import {
-  CreateUserRequestDto,
+  CreateOrLoginUserRequestDto,
   TokenDto,
   USER_PATTERNS,
 } from '@event-reward-platform/protocol';
@@ -31,7 +31,7 @@ export class UsersController {
 
   @Post()
   async createUser(
-    @Body() body: CreateUserRequestDto,
+    @Body() body: CreateOrLoginUserRequestDto,
     @Res() res: Response,
   ): Promise<Response> {
     const { accessToken, refreshToken } = await firstValueFrom<TokenDto>(
@@ -48,5 +48,26 @@ export class UsersController {
     res.setHeader('Authorization', `Bearer ${accessToken}`);
 
     return res.status(HttpStatus.CREATED).send();
+  }
+
+  @Post('login')
+  async loginUser(
+    @Body() body: CreateOrLoginUserRequestDto,
+    @Res() res: Response,
+  ): Promise<Response> {
+    const { accessToken, refreshToken } = await firstValueFrom<TokenDto>(
+      this.userClient.send(USER_PATTERNS.LOGIN, body),
+    );
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.setHeader('Authorization', `Bearer ${accessToken}`);
+
+    return res.status(HttpStatus.OK).send();
   }
 }

@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { TokenDto, USER_PATTERNS } from '@event-reward-platform/protocol';
-import { CreateUserRequestDto } from '@event-reward-platform/protocol/users/create-user-request.dto';
+import { CreateOrLoginUserRequestDto } from '@event-reward-platform/protocol/users/create-or-login-user-request.dto';
 import { AuthService } from './services/auth.service';
 import { UsersService } from './services/users.service';
 
@@ -19,9 +19,21 @@ export class UsersController {
 
   @MessagePattern(USER_PATTERNS.CREATE_USER)
   async createUser(
-    @Payload() payload: CreateUserRequestDto,
+    @Payload() payload: CreateOrLoginUserRequestDto,
   ): Promise<TokenDto> {
-    const { userId, role } = await this.usersService.signUp(payload);
+    const { userId, role } = await this.usersService.create(payload);
+
+    const accessToken = this.authService.generateAccessToken(userId, role);
+    const refreshToken = this.authService.generateRefreshToken(userId);
+
+    return { accessToken, refreshToken };
+  }
+
+  @MessagePattern(USER_PATTERNS.LOGIN)
+  async loginUser(
+    @Payload() payload: CreateOrLoginUserRequestDto,
+  ): Promise<TokenDto> {
+    const { userId, role } = await this.usersService.login(payload);
 
     const accessToken = this.authService.generateAccessToken(userId, role);
     const refreshToken = this.authService.generateRefreshToken(userId);
