@@ -40,4 +40,9 @@ export class UsersController {
 
     return { accessToken, refreshToken };
   }
+
+  @MessagePattern(USER_PATTERNS.REFRESH_TOKEN)
+  async refreshToken(@Payload() payload: TokenDto): Promise<TokenDto> {
+    return await this.authService.refreshAccessToken(payload);
+  }
 }
