@@ -16,6 +16,7 @@ interface IRpcException {
     statusCode: number;
   };
   status: number;
+  stack: string;
 }
 
 @Catch()
@@ -28,7 +29,7 @@ export class GatewayExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
 
     const httpStatus = exception.status ?? HttpStatus.INTERNAL_SERVER_ERROR;
-    const message = exception?.response?.message ?? 'Unknown error';
+    const message = exception?.response?.message || exception.message;
 
     const responseBody = {
       timestamp: Date.now(),
@@ -37,7 +38,7 @@ export class GatewayExceptionFilter implements ExceptionFilter {
       path: httpAdapter.getRequestUrl(ctx.getRequest()) as string,
     };
 
-    Logger.error(responseBody);
+    Logger.error({ ...responseBody, stack: exception.stack });
 
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
   }
