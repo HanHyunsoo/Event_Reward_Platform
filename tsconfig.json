@@ -18,6 +18,12 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
+      "@event-reward-platform/core": [
+        "libs/core/src"
+      ],
+      "@event-reward-platform/core/*": [
+        "libs/core/src/*"
+      ],
       "@event-reward-platform/protocol": [
         "libs/protocol/src"
       ],

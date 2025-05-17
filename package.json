@@ -86,6 +86,7 @@
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
+      "^@event-reward-platform/core(|/.*)$": "<rootDir>/libs/core/src/$1",
       "^@event-reward-platform/protocol(|/.*)$": "<rootDir>/libs/protocol/src/$1"
     }
   }

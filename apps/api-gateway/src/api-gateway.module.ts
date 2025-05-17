@@ -6,6 +6,8 @@ import { Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersController } from './users.controller';
 import { EventsController } from './events.controller';
+import { GatewayExceptionFilter } from './filters/gateway-exception.filter';
+import { APP_FILTER } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -13,7 +15,6 @@ import { EventsController } from './events.controller';
       isGlobal: true,
       envFilePath: ['.env'],
     }),
-
     ClientsModule.registerAsync([
       {
         name: 'USERS_SERVICE',
@@ -38,6 +39,12 @@ import { EventsController } from './events.controller';
     ]),
   ],
   controllers: [ApiGatewayController, UsersController, EventsController],
-  providers: [ApiGatewayService],
+  providers: [
+    ApiGatewayService,
+    {
+      provide: APP_FILTER,
+      useClass: GatewayExceptionFilter,
+    },
+  ],
 })
 export class ApiGatewayModule {}
