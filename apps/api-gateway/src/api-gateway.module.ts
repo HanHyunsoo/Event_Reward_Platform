@@ -1,13 +1,15 @@
 import { Module, ValidationPipe } from '@nestjs/common';
-import { ApiGatewayController } from './api-gateway.controller';
+import { ApiGatewayController } from './controllers/api-gateway.controller';
 import { ApiGatewayService } from './api-gateway.service';
 import { ClientsModule } from '@nestjs/microservices';
 import { Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UsersController } from './users.controller';
-import { EventsController } from './events.controller';
+import { UsersController } from './controllers/users.controller';
+import { EventsController } from './controllers/events.controller';
 import { GatewayExceptionFilter } from './filters/gateway-exception.filter';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { JwtStrategy } from './auth/jwt.strategy';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { APP_FILTER, APP_PIPE } from '@nestjs/core';
         inject: [ConfigService],
       },
     ]),
+    PassportModule,
   ],
   controllers: [ApiGatewayController, UsersController, EventsController],
   providers: [
@@ -49,6 +52,7 @@ import { APP_FILTER, APP_PIPE } from '@nestjs/core';
       provide: APP_PIPE,
       useClass: ValidationPipe,
     },
+    JwtStrategy,
   ],
 })
 export class ApiGatewayModule {}
