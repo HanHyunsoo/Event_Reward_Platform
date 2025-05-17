@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import {
   CreateOrLoginUserRequestDto,
   CreateOrLoginUserResponseDto,
+  UserDto,
 } from '@event-reward-platform/protocol';
 import { User, UserDocument } from '../schemas/user.schema';
 
@@ -117,5 +118,23 @@ export class UsersService {
       userId: user.userId,
       role: user.role,
     };
+  }
+
+  async updateUser(user: UserDto): Promise<UserDto> {
+    const userDoc = await this.userModel.findOne(
+      { userId: user.userId },
+      { userId: 1, role: 1 },
+    );
+
+    if (userDoc == null) {
+      throw new RpcException(
+        new NotFoundException('유저가 존재하지 않습니다.'),
+      );
+    }
+
+    userDoc.role = user.role;
+    await userDoc.save();
+
+    return { userId: userDoc.userId, role: userDoc.role };
   }
 }
