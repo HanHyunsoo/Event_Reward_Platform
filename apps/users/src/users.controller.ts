@@ -1,6 +1,10 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { TokenDto, USER_PATTERNS } from '@event-reward-platform/protocol';
+import {
+  TokenDto,
+  USER_PATTERNS,
+  UserDto,
+} from '@event-reward-platform/protocol';
 import { CreateOrLoginUserRequestDto } from '@event-reward-platform/protocol/users/create-or-login-user-request.dto';
 import { AuthService } from './services/auth.service';
 import { UsersService } from './services/users.service';
@@ -44,5 +48,10 @@ export class UsersController {
   @MessagePattern(USER_PATTERNS.REFRESH_TOKEN)
   async refreshToken(@Payload() payload: TokenDto): Promise<TokenDto> {
     return await this.authService.refreshAccessToken(payload);
+  }
+
+  @MessagePattern(USER_PATTERNS.UPDATE_USER)
+  async updateUser(@Payload() payload: UserDto): Promise<UserDto> {
+    return await this.usersService.updateUser(payload);
   }
 }
