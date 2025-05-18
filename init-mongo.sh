@@ -70,10 +70,8 @@ db.events.insertOne({
   rewards: [
     {
       rewardType: "item",
-      itemInfo: {
-        type: "weapon",
-        id: "sword1"
-      },
+      itemType: "weapon",
+      itemId: "sword1",
       quantity: 1
     }
   ],
@@ -92,6 +90,7 @@ db.events.insertOne({
   rewards: [
     {
       rewardType: "coupon",
+      couponId: "coupon1",
       quantity: 1
     }
   ],
@@ -111,10 +110,8 @@ db.events.insertOne({
   rewards: [
     {
       rewardType: "item",
-      itemInfo: {
-        type: "armor",
-        id: "fullbody1"
-      },
+      itemType: "armor",
+      itemId: "fullbody1"
       quantity: 1
     }
   ],
@@ -133,10 +130,8 @@ db.events.insertOne({
   rewards: [
     {
       rewardType: "item",
-      itemInfo: {
-        type: "weapon",
-        id: "axe1"
-      },
+      itemType: "weapon",
+      itemId: "axe1",
       quantity: 1
     }
   ],
@@ -155,10 +150,8 @@ db.events.insertOne({
   rewards: [
     {
       rewardType: "item",
-      itemInfo: {
-        type: "consumable",
-        id: "healthPotion"
-      },
+      itemType: "consumable",
+      itemId: "healthPotion",
       quantity: 3
     }
   ],
@@ -177,18 +170,14 @@ db.events.insertOne({
   rewards: [
     {
       rewardType: "item",
-      itemInfo: {
-        type: "armor",
-        id: "gloves1"
-      },
+      itemType: "armor",
+      itemId: "gloves1",
       quantity: 1
     },
     {
       rewardType: "item",
-      itemInfo: {
-        type: "armor",
-        id: "boots1"
-      },
+      itemType: "armor",
+      itemId: "boots1",
       quantity: 1
     }
   ],
@@ -208,10 +197,8 @@ db.events.insertOne({
   rewards: [
     {
       rewardType: "item",
-      itemInfo: {
-        type: "consumable",
-        id: "manaPotion"
-      },
+      itemType: "consumable",
+      itemId: "manaPotion",
       quantity: 5
     }
   ],
@@ -226,10 +213,8 @@ db.events.insertOne({
   rewards: [
     {
       rewardType: "item",
-      itemInfo: {
-        type: "consumable",
-        id: "manaPotion"
-      },
+      itemType: "consumable",
+      itemId: "manaPotion",
       quantity: 5
     }
   ],
