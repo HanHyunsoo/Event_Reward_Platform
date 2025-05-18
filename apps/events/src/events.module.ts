@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { EventsController } from './events.controller';
-import { EventsService } from './events.service';
+import { EventsService } from './services/events.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
 import { MicroServiceExceptionFilter } from '@event-reward-platform/core';
@@ -8,6 +8,8 @@ import { ClientsModule } from '@nestjs/microservices';
 import { Transport } from '@nestjs/microservices';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Event, EventSchema } from './schemas/event.schema';
+import { ClaimHistory } from './schemas/claim-history.schema';
+import { ClaimHistorySchema } from './schemas/claim-history.schema';
 
 @Module({
   imports: [
@@ -34,7 +36,10 @@ import { Event, EventSchema } from './schemas/event.schema';
         uri: configService.get<string>('EVENT_SERVICE_MONGO_URL'),
       }),
     }),
-    MongooseModule.forFeature([{ name: Event.name, schema: EventSchema }]),
+    MongooseModule.forFeature([
+      { name: Event.name, schema: EventSchema },
+      { name: ClaimHistory.name, schema: ClaimHistorySchema },
+    ]),
   ],
   controllers: [EventsController],
   providers: [

@@ -3,10 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { EventDocument } from './schemas/event.schema';
+import { EventDocument } from '../schemas/event.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
-import { Event } from './schemas/event.schema';
+import { Event } from '../schemas/event.schema';
 import {
   CreateEventRequestDto,
   CreateEventResponseDto,
@@ -29,7 +29,7 @@ import {
   CouponReward,
   ItemReward,
   Reward,
-} from './schemas/reward.subschema';
+} from '../schemas/reward.subschema';
 import { RpcException } from '@nestjs/microservices';
 import { GetEventRewardsResponse } from '@event-reward-platform/protocol/events/get-event-rewards-response';
 

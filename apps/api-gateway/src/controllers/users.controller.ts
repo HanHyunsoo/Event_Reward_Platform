@@ -16,6 +16,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import {
   CreateOrLoginUserRequestDto,
+  FindOneUserResponseDto,
   Role,
   TokenDto,
   USER_PATTERNS,
@@ -36,6 +37,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -228,5 +230,26 @@ export class UsersController {
     );
 
     return { user };
+  }
+
+  @Get(':id')
+  @UseGuards(JwtGuard, RoleGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({
+    summary: '사용자 정보 조회(ADMIN 권한 필요)',
+    description: '사용자 정보를 조회합니다.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '사용자 ID',
+    required: true,
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: '사용자 정보 조회 성공' })
+  @ApiNotFoundResponse({ description: '존재하지 않는 사용자' })
+  async getUserInfo(@Param('id') id: string): Promise<FindOneUserResponseDto> {
+    return await firstValueFrom<FindOneUserResponseDto>(
+      this.userClient.send(USER_PATTERNS.GET_USER_INFO, id),
+    );
   }
 }
