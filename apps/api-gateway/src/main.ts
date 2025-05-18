@@ -27,6 +27,10 @@ async function bootstrap() {
   const app = await NestFactory.create(ApiGatewayModule);
   setupSwagger(app);
   app.use(cookieParser());
+  app.enableCors({
+    origin: true,
+    credentials: true,
+  });
 
   const configService = app.get(ConfigService);
   const port = parseInt(configService.get('API_GATEWAY_PORT', '3000'));
