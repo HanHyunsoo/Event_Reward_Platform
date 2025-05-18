@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-mongosh <<EOF
+mongosh <<'EOF'
 
 use admin
 
@@ -19,9 +19,19 @@ db.createUser({
 
 use user_service
 db.users.insertOne({
-    "username": "admin",
-    "password": "admin",
-    "role": "ADMIN"
+    "userId": "admin",
+    "password": "$2b$10$iEg7XYpW6mSk3vs7DH0kG.DJTljPM.mcDsSBJ/mnP014UnK68K2ye",
+    "role": "admin",
+    "cash": 0,
+    "coins": 0,
+    "inventory": [],
+    "todayLoginCount": 0,
+    "consecutiveLogin": {
+      "startTime": new Date(),
+      "count": 0
+    },
+    "lastLoginAt": new Date(),
+    "bannedUntil": new Date()
 })
 
 EOF
