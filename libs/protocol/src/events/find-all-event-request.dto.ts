@@ -9,6 +9,7 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Role } from '../users/role.enum';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export class FindAllEventRequestDto {
   @IsDateString()
@@ -20,6 +21,13 @@ export class FindAllEventRequestDto {
 
   @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') {
+      return true;
+    } else if (value === 'false') {
+      return false;
+    }
+  })
   @ApiProperty({
     description: `이벤트 공개 여부 필터링 옵션
 
@@ -38,6 +46,7 @@ export class FindAllEventRequestDto {
   @IsNumber()
   @Min(1)
   @Max(100)
+  @Transform(({ value }) => Number(value))
   @ApiProperty({
     description: '이벤트 개수',
     example: 10,

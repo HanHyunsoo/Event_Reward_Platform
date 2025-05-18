@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { EventDocument } from './schemas/event.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
@@ -8,9 +8,23 @@ import {
   CreateEventResponseDto,
   FindAllEventRequestDto,
   FindOneEventResponseDto,
+  InventoryItemType,
+  RewardDto,
   RewardType,
+  WeaponId,
+  ArmorId,
+  ConsumableId,
+  ItemInfoDto,
 } from '@event-reward-platform/protocol';
 import { FindAllEventResponseDto } from '@event-reward-platform/protocol/events/find-all-event-response.dto';
+import {
+  CashReward,
+  CoinReward,
+  CouponReward,
+  ItemReward,
+  Reward,
+} from './schemas/reward.subschema';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class EventsService {
@@ -18,21 +32,108 @@ export class EventsService {
     @InjectModel(Event.name) private eventModel: Model<EventDocument>,
   ) {}
 
+  private convertRewardToDto(reward: Reward): RewardDto {
+    switch (reward.rewardType) {
+      case RewardType.ITEM: {
+        const itemReward = reward as ItemReward;
+
+        const itemInfo: ItemInfoDto = {
+          type: itemReward.itemType,
+        };
+        if (itemReward.itemType === InventoryItemType.WEAPON) {
+          itemInfo.weaponId = itemReward.itemId as WeaponId;
+        } else if (itemReward.itemType === InventoryItemType.ARMOR) {
+          itemInfo.armorId = itemReward.itemId as ArmorId;
+        } else if (itemReward.itemType === InventoryItemType.CONSUMABLE) {
+          itemInfo.consumableId = itemReward.itemId as ConsumableId;
+        }
+        return {
+          rewardType: reward.rewardType,
+          itemInfo,
+          quantity: reward.quantity,
+        } as RewardDto;
+      }
+      case RewardType.COUPON: {
+        const couponReward = reward as CouponReward;
+
+        return {
+          rewardType: couponReward.rewardType,
+          couponId: couponReward.couponId,
+          quantity: couponReward.quantity,
+        } as RewardDto;
+      }
+      case RewardType.CASH: {
+        const cashReward = reward as CashReward;
+
+        return {
+          rewardType: cashReward.rewardType,
+          quantity: cashReward.quantity,
+        } as RewardDto;
+      }
+      case RewardType.COIN: {
+        const coinReward = reward as CoinReward;
+
+        return {
+          rewardType: coinReward.rewardType,
+          quantity: coinReward.quantity,
+        } as RewardDto;
+      }
+      default:
+        return {
+          rewardType: reward.rewardType,
+          quantity: reward.quantity,
+        } as RewardDto;
+    }
+  }
+
+  private convertRewardDtoToReward(rewardDto: RewardDto): Reward {
+    if (rewardDto.rewardType === RewardType.ITEM) {
+      return {
+        rewardType: rewardDto.rewardType,
+        itemType: rewardDto?.itemInfo?.type,
+        itemId:
+          rewardDto?.itemInfo?.weaponId ??
+          rewardDto?.itemInfo?.armorId ??
+          rewardDto?.itemInfo?.consumableId,
+        quantity: rewardDto.quantity,
+      } as ItemReward;
+    }
+
+    if (rewardDto.rewardType === RewardType.COUPON) {
+      return {
+        rewardType: rewardDto.rewardType,
+        couponId: rewardDto.couponId,
+        quantity: rewardDto.quantity,
+      } as CouponReward;
+    }
+
+    if (rewardDto.rewardType === RewardType.CASH) {
+      return {
+        rewardType: rewardDto.rewardType,
+        quantity: rewardDto.quantity,
+      } as CashReward;
+    }
+
+    if (rewardDto.rewardType === RewardType.COIN) {
+      return {
+        rewardType: rewardDto.rewardType,
+        quantity: rewardDto.quantity,
+      } as CoinReward;
+    }
+
+    throw new RpcException(new BadRequestException('Invalid reward type'));
+  }
+
   async createEvent(
     createEventRequestDto: CreateEventRequestDto,
   ): Promise<CreateEventResponseDto> {
     const requestEvent = createEventRequestDto.event;
 
     const challenge = requestEvent.challenge;
-    const rewards = requestEvent.rewards.map((reward) => {
-      if (reward.rewardType !== RewardType.ITEM && reward.itemInfo != null) {
-        return {
-          rewardType: RewardType.ITEM,
-          quantity: reward.quantity,
-        };
-      }
-      return reward;
-    });
+
+    const rewards = requestEvent.rewards.map((reward) =>
+      this.convertRewardDtoToReward(reward),
+    );
 
     const insertedEvent = await this.eventModel.create({
       startTime: new Date(requestEvent.startTime),
@@ -71,7 +172,7 @@ export class EventsService {
         endTime: event.endTime,
         isPublic: event.isPublic,
         challenge: event.challenge,
-        rewards: event.rewards,
+        rewards: event.rewards.map((event) => this.convertRewardToDto(event)),
         rewardLimit: event.rewardLimit,
         creatorId: event.creatorId,
       },
@@ -88,7 +189,7 @@ export class EventsService {
         startTime: { $gte: startDate },
         isPublic: isPublic,
       })
-      .sort({ startTime: -1 })
+      .sort({ startTime: 1 })
       .limit(count);
 
     return {
@@ -98,7 +199,7 @@ export class EventsService {
         endTime: event.endTime,
         isPublic: event.isPublic,
         challenge: event.challenge,
-        rewards: event.rewards,
+        rewards: event.rewards.map((event) => this.convertRewardToDto(event)),
         rewardLimit: event.rewardLimit,
         creatorId: event.creatorId,
       })),
