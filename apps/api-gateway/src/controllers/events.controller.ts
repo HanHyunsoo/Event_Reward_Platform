@@ -17,7 +17,9 @@ import {
   EVENT_PATTERNS,
   EventDto,
   FindAllEventRequestDto,
+  FindAllEventResponseDto,
   FindOneEventResponseDto,
+  GetEventRewardsResponse,
   Role,
 } from '@event-reward-platform/protocol';
 import { Request } from 'express';
@@ -26,7 +28,6 @@ import { JwtGuard } from '../auth/jwt.guard';
 import { RoleGuard } from '../auth/role.guard';
 import { Roles } from '../decorators/roles.decorator';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
-import { FindAllEventResponseDto } from '@event-reward-platform/protocol/events/find-all-event-response.dto';
 import { Types } from 'mongoose';
 import {
   ApiBearerAuth,
@@ -181,5 +182,29 @@ export class EventsController {
           return event;
         }),
     };
+  }
+
+  @Get(':id/rewards')
+  @UseGuards(JwtGuard)
+  @ApiOperation({
+    summary: '이벤트 보상 조회',
+    description: '이벤트 보상을 조회합니다.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '이벤트 ID(ObjectId)',
+    example: '6694902b254b2569ad704db2',
+    type: String,
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: '이벤트 보상 조회 성공' })
+  @ApiBadRequestResponse({ description: '요청 형식 확인' })
+  @ApiUnauthorizedResponse({ description: '유효하지 않은 인증 토큰' })
+  async getEventRewards(
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
+  ): Promise<GetEventRewardsResponse> {
+    return await firstValueFrom<GetEventRewardsResponse>(
+      this.eventClient.send(EVENT_PATTERNS.GET_REWARDS, id.toString()),
+    );
   }
 }
