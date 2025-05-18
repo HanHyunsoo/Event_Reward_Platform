@@ -84,7 +84,7 @@ export class EventsService {
   async findAllEvents(
     findAllEventRequestDto: FindAllEventRequestDto,
   ): Promise<FindAllEventResponseDto> {
-    const { startDate, isPublic, count } = findAllEventRequestDto;
+    const { startDate, isPublic, limit } = findAllEventRequestDto;
 
     const events = await this.eventModel
       .find({
@@ -92,7 +92,7 @@ export class EventsService {
         isPublic: isPublic,
       })
       .sort({ startTime: 1 })
-      .limit(count);
+      .limit(limit);
 
     return {
       events: events.map((event) => ({

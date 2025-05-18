@@ -15,6 +15,7 @@ import { firstValueFrom } from 'rxjs';
 import {
   ClaimEventRewardResponse,
   ClaimEventRewardsRequestDto,
+  ClaimHistoryFilter,
   CreateEventRequestDto,
   CreateEventResponseDto,
   EVENT_PATTERNS,
@@ -22,6 +23,8 @@ import {
   FindAllEventRequestDto,
   FindAllEventResponseDto,
   FindOneEventResponseDto,
+  GetClaimHistoriesRequestDto,
+  GetClaimHistoriesResponseDto,
   GetEventRewardsResponse,
   Role,
   UpdateEventRewardsRequestDto,
@@ -246,11 +249,11 @@ export class EventsController {
     );
   }
 
-  @Post(':id/rewards/claim')
+  @Post(':id/reward-claims')
   @UseGuards(JwtGuard)
   @ApiOperation({
-    summary: '이벤트 보상 클레임',
-    description: '이벤트 보상을 클레임합니다.',
+    summary: '이벤트 보상 지급 요청',
+    description: '이벤트 조건 달성 시 해당 보상을 지급받습니다.',
   })
   @ApiParam({
     name: 'id',
@@ -259,10 +262,12 @@ export class EventsController {
     type: String,
   })
   @ApiBearerAuth()
-  @ApiOkResponse({ description: '이벤트 보상 클레임 성공' })
+  @ApiOkResponse({ description: '이벤트 보상 지급 성공' })
   @ApiBadRequestResponse({ description: '요청 형식 확인' })
   @ApiUnauthorizedResponse({ description: '유효하지 않은 인증 토큰' })
-  @ApiConflictResponse({ description: '이벤트 보상 클레임 실패' })
+  @ApiConflictResponse({
+    description: '이벤트 보상 지급 실패(중복 수령, 선착순 마감, 중복 요청)',
+  })
   async claimEventRewards(
     @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
     @Req() req: Request,
@@ -272,6 +277,86 @@ export class EventsController {
         eventId: id.toString(),
         userId: (req.user as AccessTokenPayload).userId,
       } as ClaimEventRewardsRequestDto),
+    );
+  }
+
+  @Get('reward-claims')
+  @UseGuards(JwtGuard)
+  @ApiOperation({
+    summary: '이벤트 보상 지급 내역 조회',
+    description:
+      '이벤트 보상 지급 내역을 조회합니다(updatedAt 내림차순 정렬). 유저의 권한에 따라 보이는 내역이 다릅니다.\n\n' +
+      '- ADMIN/OPERATOR/AUDITOR 권한의 경우 모든 이벤트 보상 지급 내역을 조회할 수 있습니다.\n' +
+      '- USER 권한의 경우 자신의 이벤트 보상 지급 내역만 조회할 수 있습니다.',
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: '이벤트 보상 지급 내역 조회 성공' })
+  @ApiBadRequestResponse({ description: '요청 형식 확인' })
+  @ApiUnauthorizedResponse({ description: '유효하지 않은 인증 토큰' })
+  async getClaimHistories(
+    @Query() query: GetClaimHistoriesRequestDto,
+    @Req() req: Request,
+  ): Promise<GetClaimHistoriesResponseDto> {
+    const user = req.user as AccessTokenPayload;
+
+    const filter = [Role.ADMIN, Role.OPERATOR, Role.AUDITOR].includes(user.role)
+      ? ClaimHistoryFilter.ALL
+      : ClaimHistoryFilter.USER_ID;
+
+    return await firstValueFrom<GetClaimHistoriesResponseDto>(
+      this.eventClient.send(EVENT_PATTERNS.GET_CLAIM_HISTORIES, {
+        filter,
+        userId:
+          filter === ClaimHistoryFilter.USER_ID && user.userId
+            ? user.userId
+            : undefined,
+        timeAt: query.timeAt,
+        limit: query.limit,
+      } as GetClaimHistoriesRequestDto),
+    );
+  }
+
+  @Get(':id/reward-claims')
+  @UseGuards(JwtGuard)
+  @ApiOperation({
+    summary: '특정 이벤트 보상 지급 내역 조회',
+    description:
+      '특정 이벤트 보상 지급 내역을 조회합니다(updatedAt 내림차순 정렬). 유저의 권한에 따라 보이는 내역이 다릅니다.\n\n' +
+      '- ADMIN/OPERATOR/AUDITOR 권한의 경우 모든 이벤트 보상 지급 내역을 조회할 수 있습니다.\n' +
+      '- USER 권한의 경우 자신의 이벤트 보상 지급 내역만 조회할 수 있습니다.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '이벤트 ID(ObjectId)',
+    example: '6694902b254b2569ad704db2',
+    type: String,
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: '이벤트 보상 지급 내역 조회 성공' })
+  @ApiBadRequestResponse({ description: '요청 형식 확인' })
+  @ApiUnauthorizedResponse({ description: '유효하지 않은 인증 토큰' })
+  async getClaimHistoriesByEvent(
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
+    @Query() query: GetClaimHistoriesRequestDto,
+    @Req() req: Request,
+  ): Promise<GetClaimHistoriesResponseDto> {
+    const user = req.user as AccessTokenPayload;
+
+    const filter = [Role.ADMIN, Role.OPERATOR, Role.AUDITOR].includes(user.role)
+      ? ClaimHistoryFilter.EVENT_ID
+      : ClaimHistoryFilter.EVENT_ID_AND_USER_ID;
+
+    return await firstValueFrom<GetClaimHistoriesResponseDto>(
+      this.eventClient.send(EVENT_PATTERNS.GET_CLAIM_HISTORIES, {
+        filter,
+        userId:
+          filter === ClaimHistoryFilter.EVENT_ID_AND_USER_ID
+            ? user.userId
+            : undefined,
+        eventId: id.toString(),
+        timeAt: query.timeAt,
+        limit: query.limit,
+      } as GetClaimHistoriesRequestDto),
     );
   }
 }

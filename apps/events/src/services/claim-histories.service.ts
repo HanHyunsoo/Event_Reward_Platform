@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Model } from 'mongoose';
+import { Connection, FilterQuery, Model } from 'mongoose';
 import { ClaimHistoryDocument } from '../schemas/claim-history.schema';
 import { ClaimHistory } from '../schemas/claim-history.schema';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -20,6 +20,9 @@ import {
   GiveRewardsResponse,
   ChallengeType,
   AllUserDto,
+  GetClaimHistoriesResponseDto,
+  GetClaimHistoriesRequestDto,
+  ClaimHistoryFilter,
 } from '@event-reward-platform/protocol';
 import { firstValueFrom } from 'rxjs';
 import { EventDocument } from '../schemas/event.schema';
@@ -205,5 +208,58 @@ export class ClaimHistoriesService {
       default:
         return false;
     }
+  }
+
+  async getClaimHistories(
+    getClaimHistoriesRequestDto: GetClaimHistoriesRequestDto,
+  ): Promise<GetClaimHistoriesResponseDto> {
+    const { timeAt, eventId, limit, userId, filter } =
+      getClaimHistoriesRequestDto;
+
+    let query: FilterQuery<ClaimHistoryDocument> = {};
+    switch (filter) {
+      case ClaimHistoryFilter.ALL:
+        query = {
+          updatedAt: { $gte: timeAt },
+        };
+        break;
+      case ClaimHistoryFilter.EVENT_ID:
+        query = {
+          eventId,
+        };
+        break;
+      case ClaimHistoryFilter.USER_ID:
+        query = {
+          userId,
+        };
+        break;
+      case ClaimHistoryFilter.EVENT_ID_AND_USER_ID:
+        query = {
+          eventId,
+          userId,
+        };
+        break;
+      default:
+        throw new BadRequestException('잘못된 필터입니다.');
+    }
+
+    const claimHistories = await this.claimHistoryModel
+      .find({
+        ...query,
+        updatedAt: { $gte: timeAt },
+      })
+      .sort({ updatedAt: -1 })
+      .limit(limit);
+
+    return {
+      claimHistories: claimHistories.map((claimHistory) => ({
+        eventId: claimHistory.eventId,
+        userId: claimHistory.userId,
+        status: claimHistory.status,
+        failureCause: claimHistory.failureCause,
+        createdAt: claimHistory.get('createdAt') as Date,
+        updatedAt: claimHistory.get('updatedAt') as Date,
+      })),
+    };
   }
 }
