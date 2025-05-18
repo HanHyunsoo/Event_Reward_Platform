@@ -6,7 +6,10 @@ import { Event } from './schemas/event.schema';
 import {
   CreateEventRequestDto,
   CreateEventResponseDto,
+  FindAllEventRequestDto,
+  FindOneEventResponseDto,
 } from '@event-reward-platform/protocol';
+import { FindAllEventResponseDto } from '@event-reward-platform/protocol/events/find-all-event-response.dto';
 
 @Injectable()
 export class EventsService {
@@ -42,6 +45,54 @@ export class EventsService {
         rewards: insertedEvent.rewards,
         rewardLimit: insertedEvent.rewardLimit,
       },
+    };
+  }
+
+  async getEventById(eventId: string): Promise<FindOneEventResponseDto> {
+    const event = await this.eventModel.findById(eventId);
+
+    if (!event) {
+      return {};
+    }
+
+    return {
+      event: {
+        _id: (event._id as mongoose.Types.ObjectId).toString(),
+        startTime: event.startTime,
+        endTime: event.endTime,
+        isPublic: event.isPublic,
+        challenge: event.challenge,
+        rewards: event.rewards,
+        rewardLimit: event.rewardLimit,
+        creatorId: event.creatorId,
+      },
+    };
+  }
+
+  async findAllEvents(
+    findAllEventRequestDto: FindAllEventRequestDto,
+  ): Promise<FindAllEventResponseDto> {
+    const { startDate, isPublic, count } = findAllEventRequestDto;
+
+    const events = await this.eventModel
+      .find({
+        startTime: { $gte: startDate },
+        isPublic: isPublic,
+      })
+      .sort({ startTime: -1 })
+      .limit(count);
+
+    return {
+      events: events.map((event) => ({
+        _id: (event._id as mongoose.Types.ObjectId).toString(),
+        startTime: event.startTime,
+        endTime: event.endTime,
+        isPublic: event.isPublic,
+        challenge: event.challenge,
+        rewards: event.rewards,
+        rewardLimit: event.rewardLimit,
+        creatorId: event.creatorId,
+      })),
     };
   }
 }

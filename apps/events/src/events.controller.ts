@@ -5,7 +5,10 @@ import {
   CreateEventRequestDto,
   CreateEventResponseDto,
   EVENT_PATTERNS,
+  FindAllEventRequestDto,
+  FindOneEventResponseDto,
 } from '@event-reward-platform/protocol';
+import { FindAllEventResponseDto } from '@event-reward-platform/protocol/events/find-all-event-response.dto';
 
 @Controller()
 export class EventsController {
@@ -21,5 +24,19 @@ export class EventsController {
     @Payload() payload: CreateEventRequestDto,
   ): Promise<CreateEventResponseDto> {
     return await this.eventsService.createEvent(payload);
+  }
+
+  @MessagePattern(EVENT_PATTERNS.GET_EVENT_BY_ID)
+  async getEventById(
+    @Payload() payload: string,
+  ): Promise<FindOneEventResponseDto> {
+    return await this.eventsService.getEventById(payload);
+  }
+
+  @MessagePattern(EVENT_PATTERNS.GET_EVENTS)
+  async findAllEvents(
+    @Payload() payload: FindAllEventRequestDto,
+  ): Promise<FindAllEventResponseDto> {
+    return await this.eventsService.findAllEvents(payload);
   }
 }
