@@ -6,6 +6,7 @@ import {
   ArmorId,
   ConsumableId,
   Role,
+  CouponId,
 } from '@event-reward-platform/protocol';
 
 export type UserDocument = User & Document;
@@ -17,6 +18,15 @@ export class InventoryItem {
 
   @Prop({ required: true, type: String })
   id: WeaponId | ArmorId | ConsumableId;
+
+  @Prop({ required: true, default: 0 })
+  quantity: number;
+}
+
+@Schema({ _id: false })
+export class Coupon {
+  @Prop({ required: true, type: String, enum: CouponId })
+  couponId: CouponId;
 
   @Prop({ required: true, default: 0 })
   quantity: number;
@@ -50,6 +60,9 @@ export class User {
 
   @Prop({ type: [InventoryItem], default: [] })
   inventory: InventoryItem[];
+
+  @Prop({ type: [Coupon], default: [] })
+  coupons: Coupon[];
 
   @Prop({ required: true, default: 0 })
   todayLoginCount: number;

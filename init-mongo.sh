@@ -25,6 +25,7 @@ db.users.insertOne({
     "cash": 0,
     "coins": 0,
     "inventory": [],
+    "coupons": [],
     "todayLoginCount": 0,
     "consecutiveLogin": {
       "startTime": new Date(),

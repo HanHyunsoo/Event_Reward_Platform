@@ -16,13 +16,26 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { IsDateAfter } from '@event-reward-platform/core';
+import { IsAnyEnum, IsDateAfter } from '@event-reward-platform/core';
 import { ApiProperty } from '@nestjs/swagger';
+import { CouponId } from '../users/coupon.enum';
 
 export class ChallengeDto {
   @IsEnum(ChallengeType)
   @ApiProperty({
-    description: '챌린지 타입',
+    description: `챌린지 타입
+
+챌린지 타입에 따라 값을 다르게 설정해주세요.
+
+- 누적 로그인 횟수 - loginCount: number
+- 복귀 유저 - daysSinceLastLogin: number
+- 캐시 소유 이상 - cash: number
+- 캐시 소유 이하 - cash: number
+- 코인 소유 이상 - coin: number
+- 코인 소유 이하 - coin: number
+- 모든 아이템 소유 개수 - count: number
+- 특정 아이템 소유 개수 - itemId: WeaponId | ArmorId | ConsumableId, count: number
+    `,
     example: ChallengeType.누적_로그인_횟수,
     enum: ChallengeType,
   })
@@ -30,6 +43,10 @@ export class ChallengeDto {
 
   @ValidateIf((o: ChallengeDto) => o.type === ChallengeType.누적_로그인_횟수)
   @IsNumber()
+  @ApiProperty({
+    description: '누적 로그인 횟수',
+    example: 7,
+  })
   loginCount?: number;
 
   @ValidateIf((o: ChallengeDto) => o.type === ChallengeType.복귀_유저)
@@ -64,43 +81,41 @@ export class ChallengeDto {
   @ValidateIf(
     (o: ChallengeDto) => o.type === ChallengeType.특정_아이템_소유_개수,
   )
-  @IsEnum(WeaponId)
-  @IsEnum(ArmorId)
-  @IsEnum(ConsumableId)
-  @ApiProperty({
-    description: '아이템 ID',
-    example: WeaponId.AXE1,
-    enum: [
-      ...Object.values(WeaponId),
-      ...Object.values(ArmorId),
-      ...Object.values(ConsumableId),
-    ],
-  })
+  @IsAnyEnum([WeaponId, ArmorId, ConsumableId])
   itemId?: WeaponId | ArmorId | ConsumableId;
 }
 
-class ItemInfoDto {
+export class ItemInfoDto {
   @IsEnum(InventoryItemType)
   @ApiProperty({
-    description: '아이템 타입',
+    description: `
+아이템 타입에 따라 id key 값을 다르게 설정해주세요.
+- WEAPON: weaponId(${Object.values(WeaponId).join(', ')})
+- ARMOR: armorId(${Object.values(ArmorId).join(', ')})
+- CONSUMABLE: consumableId(${Object.values(ConsumableId).join(', ')})
+    `,
     example: InventoryItemType.WEAPON,
     enum: InventoryItemType,
   })
   type: InventoryItemType;
 
+  @ValidateIf((o: ItemInfoDto) => o.type === InventoryItemType.WEAPON)
   @IsEnum(WeaponId)
-  @IsEnum(ArmorId)
-  @IsEnum(ConsumableId)
   @ApiProperty({
-    description: '아이템 ID',
+    description: '무기 ID',
     example: WeaponId.AXE1,
-    enum: [
-      ...Object.values(WeaponId),
-      ...Object.values(ArmorId),
-      ...Object.values(ConsumableId),
-    ],
+    enum: WeaponId,
+    required: false,
   })
-  id: WeaponId | ArmorId | ConsumableId;
+  weaponId?: WeaponId;
+
+  @ValidateIf((o: ItemInfoDto) => o.type === InventoryItemType.ARMOR)
+  @IsEnum(ArmorId)
+  armorId?: ArmorId;
+
+  @ValidateIf((o: ItemInfoDto) => o.type === InventoryItemType.CONSUMABLE)
+  @IsEnum(ConsumableId)
+  consumableId?: ConsumableId;
 }
 
 export class RewardDto {
@@ -121,6 +136,10 @@ export class RewardDto {
   })
   itemInfo?: ItemInfoDto;
 
+  @ValidateIf((o: RewardDto) => o.rewardType === RewardType.COUPON)
+  @IsEnum(CouponId)
+  couponId?: CouponId;
+
   @IsNumber()
   @ApiProperty({
     description: '보상 개수',
@@ -136,7 +155,7 @@ export class EventDto {
   @IsDateString()
   @ApiProperty({
     description: '이벤트 시작 시간',
-    example: '2025-01-01T00:00:00.000Z',
+    example: '2025-05-01T00:00:00.000Z',
   })
   startTime: Date | string;
 
@@ -144,7 +163,7 @@ export class EventDto {
   @IsDateAfter('startTime')
   @ApiProperty({
     description: '이벤트 종료 시간(startTime 이후로 설정해주세요)',
-    example: '2025-01-01T00:00:00.000Z',
+    example: '2025-12-31T00:00:00.000Z',
   })
   endTime: Date | string;
 
