@@ -34,4 +34,205 @@ db.users.insertOne({
     "bannedUntil": new Date()
 })
 
+use event_service
+// 누적 로그인 횟수 이벤트
+db.events.insertOne({
+  startTime: new Date(),
+  endTime: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  isPublic: true,
+  challenge: {
+    type: "continuousLoginCount",
+    loginCount: 7
+  },
+  rewards: [
+    {
+      rewardType: "cash",
+      quantity: 1000
+    },
+    {
+      rewardType: "coin", 
+      quantity: 500
+    }
+  ],
+  creatorId: "admin"
+})
+
+// 복귀 유저 이벤트
+db.events.insertOne({
+  startTime: new Date(),
+  endTime: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  isPublic: true,
+  challenge: {
+    type: "returnUser",
+    daysSinceLastLogin: 30
+  },
+  rewards: [
+    {
+      rewardType: "item",
+      itemInfo: {
+        type: "weapon",
+        id: "sword1"
+      },
+      quantity: 1
+    }
+  ],
+  creatorId: "admin"
+})
+
+// 캐시 소유 이상 이벤트
+db.events.insertOne({
+  startTime: new Date(),
+  endTime: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  isPublic: true,
+  challenge: {
+    type: "cashGreaterThanOrEqual",
+    cash: 5000
+  },
+  rewards: [
+    {
+      rewardType: "coupon",
+      quantity: 1
+    }
+  ],
+  rewardLimit: 100,
+  creatorId: "admin"
+})
+
+// 캐시 소유 이하 이벤트
+db.events.insertOne({
+  startTime: new Date(),
+  endTime: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  isPublic: true,
+  challenge: {
+    type: "cashLessThanOrEqual",
+    cash: 1000
+  },
+  rewards: [
+    {
+      rewardType: "item",
+      itemInfo: {
+        type: "armor",
+        id: "fullbody1"
+      },
+      quantity: 1
+    }
+  ],
+  creatorId: "admin"
+})
+
+// 코인 소유 이상 이벤트
+db.events.insertOne({
+  startTime: new Date(),
+  endTime: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  isPublic: true,
+  challenge: {
+    type: "coinGreaterThanOrEqual",
+    coin: 10000
+  },
+  rewards: [
+    {
+      rewardType: "item",
+      itemInfo: {
+        type: "weapon",
+        id: "axe1"
+      },
+      quantity: 1
+    }
+  ],
+  creatorId: "admin"
+})
+
+// 코인 소유 이하 이벤트
+db.events.insertOne({
+  startTime: new Date(),
+  endTime: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  isPublic: true,
+  challenge: {
+    type: "coinLessThanOrEqual",
+    coin: 500
+  },
+  rewards: [
+    {
+      rewardType: "item",
+      itemInfo: {
+        type: "consumable",
+        id: "healthPotion"
+      },
+      quantity: 3
+    }
+  ],
+  creatorId: "admin"
+})
+
+// 모든 아이템 소유 개수 이벤트
+db.events.insertOne({
+  startTime: new Date(),
+  endTime: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  isPublic: true,
+  challenge: {
+    type: "allItemCount",
+    count: 5
+  },
+  rewards: [
+    {
+      rewardType: "item",
+      itemInfo: {
+        type: "armor",
+        id: "gloves1"
+      },
+      quantity: 1
+    },
+    {
+      rewardType: "item",
+      itemInfo: {
+        type: "armor",
+        id: "boots1"
+      },
+      quantity: 1
+    }
+  ],
+  creatorId: "admin"
+})
+
+// 특정 아이템 소유 개수 이벤트
+db.events.insertOne({
+  startTime: new Date(),
+  endTime: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  isPublic: true,
+  challenge: {
+    type: "specificItemCount",
+    itemId: "bow1",
+    count: 2
+  },
+  rewards: [
+    {
+      rewardType: "item",
+      itemInfo: {
+        type: "consumable",
+        id: "manaPotion"
+      },
+      quantity: 5
+    }
+  ],
+  creatorId: "admin"
+})
+
+// 조건 없는 이벤트
+db.events.insertOne({
+  startTime: new Date(),
+  endTime: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  isPublic: true,
+  rewards: [
+    {
+      rewardType: "item",
+      itemInfo: {
+        type: "consumable",
+        id: "manaPotion"
+      },
+      quantity: 5
+    }
+  ],
+  creatorId: "admin"
+})
+
 EOF
