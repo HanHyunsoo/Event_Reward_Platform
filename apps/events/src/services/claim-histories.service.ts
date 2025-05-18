@@ -92,8 +92,10 @@ export class ClaimHistoriesService {
       eventId,
       userId,
       status: ClaimStatus.PROCESSING,
+      updatedAt: { $lte: new Date(Date.now() - 1000 * 60) },
     });
 
+    // 1분 이내에 같은 이벤트에 대해 동시 요청이라 판단되면 실패 처리
     if (isProcessing) {
       await this.claimHistoryModel.create({
         eventId,
