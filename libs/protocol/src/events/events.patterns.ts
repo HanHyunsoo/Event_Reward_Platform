@@ -5,4 +5,5 @@ export const EVENT_PATTERNS = {
   GET_EVENTS: 'events.getEvents',
   UPDATE_REWARDS: 'events.updateRewards',
   GET_REWARDS: 'events.getRewards',
+  CLAIM_REWARD: 'events.claimReward',
 } as const;
