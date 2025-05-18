@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   HttpStatus,
   Inject,
   Param,
@@ -16,6 +17,8 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import {
   CreateOrLoginUserRequestDto,
+  FindOneUserResponseDto,
+  GiveRewardsRequestDto,
   Role,
   TokenDto,
   USER_PATTERNS,
@@ -36,9 +39,11 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { GiveRewardsResponse } from '@event-reward-platform/protocol/users/give-rewards-response.dto';
 
 @Controller('users')
 export class UsersController {
@@ -228,5 +233,51 @@ export class UsersController {
     );
 
     return { user };
+  }
+
+  @Get(':id')
+  @UseGuards(JwtGuard, RoleGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({
+    summary: '사용자 정보 조회(ADMIN 권한 필요)',
+    description: '사용자 정보를 조회합니다.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '사용자 ID',
+    required: true,
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: '사용자 정보 조회 성공' })
+  @ApiNotFoundResponse({ description: '존재하지 않는 사용자' })
+  async getUserInfo(@Param('id') id: string): Promise<FindOneUserResponseDto> {
+    return await firstValueFrom<FindOneUserResponseDto>(
+      this.userClient.send(USER_PATTERNS.GET_USER_INFO, id),
+    );
+  }
+
+  @Post(':id/rewards')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RoleGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({
+    summary: '사용자 보상 지급(ADMIN 권한 필요)',
+    description: '사용자에게 보상을 지급합니다.',
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: '사용자 보상 지급 성공' })
+  @ApiBadRequestResponse({ description: '요청 형식 확인' })
+  @ApiNotFoundResponse({ description: '존재하지 않는 사용자' })
+  @ApiForbiddenResponse({ description: '권한이 없습니다.' })
+  async giveRewards(
+    @Param('id') id: string,
+    @Body() body: GiveRewardsRequestDto,
+  ): Promise<GiveRewardsResponse> {
+    return await firstValueFrom<GiveRewardsResponse>(
+      this.userClient.send(USER_PATTERNS.GIVE_REWARDS, {
+        userId: id,
+        rewards: body.rewards,
+      }),
+    );
   }
 }
