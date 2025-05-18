@@ -1,6 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
+  FindOneUserResponseDto,
   TokenDto,
   USER_PATTERNS,
   UserDto,
@@ -53,5 +54,12 @@ export class UsersController {
   @MessagePattern(USER_PATTERNS.UPDATE_USER)
   async updateUser(@Payload() payload: UserDto): Promise<UserDto> {
     return await this.usersService.updateUser(payload);
+  }
+
+  @MessagePattern(USER_PATTERNS.GET_USER_INFO)
+  async getUserInfo(
+    @Payload() payload: string,
+  ): Promise<FindOneUserResponseDto> {
+    return await this.usersService.getUserInfo(payload);
   }
 }

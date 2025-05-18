@@ -1,5 +1,5 @@
 import { Body, Controller } from '@nestjs/common';
-import { EventsService } from './events.service';
+import { EventsService } from './services/events.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
   CreateEventRequestDto,

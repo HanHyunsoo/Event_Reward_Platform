@@ -32,7 +32,9 @@ db.users.insertOne({
       "count": 0
     },
     "lastLoginAt": new Date(),
-    "bannedUntil": new Date()
+    "bannedUntil": new Date(),
+    "createdAt": new Date(),
+    "updatedAt": new Date()
 })
 
 use event_service

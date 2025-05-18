@@ -12,6 +12,7 @@ import * as bcrypt from 'bcrypt';
 import {
   CreateOrLoginUserRequestDto,
   CreateOrLoginUserResponseDto,
+  FindOneUserResponseDto,
   UserDto,
 } from '@event-reward-platform/protocol';
 import { User, UserDocument } from '../schemas/user.schema';
@@ -118,6 +119,41 @@ export class UsersService {
     return {
       userId: user.userId,
       role: user.role,
+    };
+  }
+
+  async getUserInfo(userId: string): Promise<FindOneUserResponseDto> {
+    const user = await this.userModel.findOne({ userId });
+
+    if (user == null) {
+      return {};
+    }
+
+    return {
+      user: {
+        userId: user.userId,
+        role: user.role,
+        cash: user.cash,
+        coins: user.coins,
+        inventory: user.inventory.map((item) => ({
+          type: item.type,
+          id: item.id,
+          quantity: item.quantity,
+        })),
+        coupons: user.coupons.map((coupon) => ({
+          couponId: coupon.couponId,
+          quantity: coupon.quantity,
+        })),
+        todayLoginCount: user.todayLoginCount,
+        consecutiveLogin: {
+          startTime: user.consecutiveLogin.startTime,
+          count: user.consecutiveLogin.count,
+        },
+        lastLoginAt: user.lastLoginAt,
+        bannedUntil: user.bannedUntil,
+        createdAt: user.get('createdAt') as Date,
+        updatedAt: user.get('updatedAt') as Date,
+      },
     };
   }
 

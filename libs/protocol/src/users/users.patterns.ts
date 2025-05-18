@@ -4,4 +4,5 @@ export const USER_PATTERNS = {
   LOGIN: 'users.login',
   REFRESH_TOKEN: 'users.refreshToken',
   UPDATE_USER: 'users.update',
+  GET_USER_INFO: 'users.getUserInfo',
 } as const;
