@@ -8,6 +8,7 @@ import {
   CreateEventResponseDto,
   FindAllEventRequestDto,
   FindOneEventResponseDto,
+  RewardType,
 } from '@event-reward-platform/protocol';
 import { FindAllEventResponseDto } from '@event-reward-platform/protocol/events/find-all-event-response.dto';
 
@@ -23,7 +24,15 @@ export class EventsService {
     const requestEvent = createEventRequestDto.event;
 
     const challenge = requestEvent.challenge;
-    const rewards = requestEvent.rewards;
+    const rewards = requestEvent.rewards.map((reward) => {
+      if (reward.rewardType !== RewardType.ITEM && reward.itemInfo != null) {
+        return {
+          rewardType: RewardType.ITEM,
+          quantity: reward.quantity,
+        };
+      }
+      return reward;
+    });
 
     const insertedEvent = await this.eventModel.create({
       startTime: new Date(requestEvent.startTime),
