@@ -1,7 +1,11 @@
-import { Controller } from '@nestjs/common';
+import { Body, Controller } from '@nestjs/common';
 import { EventsService } from './events.service';
-import { MessagePattern } from '@nestjs/microservices';
-import { EVENT_PATTERNS } from '@event-reward-platform/protocol';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  CreateEventRequestDto,
+  CreateEventResponseDto,
+  EVENT_PATTERNS,
+} from '@event-reward-platform/protocol';
 
 @Controller()
 export class EventsController {
@@ -9,6 +13,13 @@ export class EventsController {
 
   @MessagePattern(EVENT_PATTERNS.HEALTH_CHECK)
   async healthCheck(): Promise<string> {
-    return await Promise.resolve('OKE');
+    return await Promise.resolve('OK');
+  }
+
+  @MessagePattern(EVENT_PATTERNS.CREATE_EVENT)
+  async createEvent(
+    @Payload() payload: CreateEventRequestDto,
+  ): Promise<CreateEventResponseDto> {
+    return await this.eventsService.createEvent(payload);
   }
 }
