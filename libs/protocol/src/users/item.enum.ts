@@ -20,6 +20,6 @@ export enum ArmorId {
 }
 
 export enum ConsumableId {
-  HEALTH_POTION = 'health_potion',
-  MANA_POTION = 'mana_potion',
+  HEALTH_POTION = 'healthPotion',
+  MANA_POTION = 'manaPotion',
 }

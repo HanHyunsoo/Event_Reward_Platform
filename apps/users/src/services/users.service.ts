@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -90,7 +91,7 @@ export class UsersService {
 
     if (user.bannedUntil.getTime() > now.getTime()) {
       throw new RpcException(
-        new UnauthorizedException(
+        new ForbiddenException(
           `유저가 정지되었습니다.(정지 종료 시간: ${user.bannedUntil.toISOString()})`,
         ),
       );

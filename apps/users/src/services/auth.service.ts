@@ -1,5 +1,6 @@
 import {
   Injectable,
+  ForbiddenException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -102,7 +103,7 @@ export class AuthService {
 
     if (user.bannedUntil.getTime() > Date.now()) {
       throw new RpcException(
-        new UnauthorizedException(
+        new ForbiddenException(
           `유저가 정지되었습니다.(정지 종료 시간: ${user.bannedUntil.toISOString()})`,
         ),
       );
