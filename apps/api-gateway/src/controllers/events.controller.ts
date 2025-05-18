@@ -5,6 +5,7 @@ import {
   Inject,
   Param,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -17,8 +18,12 @@ import {
   EVENT_PATTERNS,
   EventDto,
   FindAllEventRequestDto,
+  FindAllEventResponseDto,
   FindOneEventResponseDto,
+  GetEventRewardsResponse,
   Role,
+  UpdateEventRewardsRequestDto,
+  UpdateEventRewardsResponseDto,
 } from '@event-reward-platform/protocol';
 import { Request } from 'express';
 import { AccessTokenPayload } from '@event-reward-platform/core';
@@ -26,7 +31,6 @@ import { JwtGuard } from '../auth/jwt.guard';
 import { RoleGuard } from '../auth/role.guard';
 import { Roles } from '../decorators/roles.decorator';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
-import { FindAllEventResponseDto } from '@event-reward-platform/protocol/events/find-all-event-response.dto';
 import { Types } from 'mongoose';
 import {
   ApiBearerAuth,
@@ -181,5 +185,61 @@ export class EventsController {
           return event;
         }),
     };
+  }
+
+  @Get(':id/rewards')
+  @UseGuards(JwtGuard)
+  @ApiOperation({
+    summary: '이벤트 보상 조회',
+    description: '이벤트 보상을 조회합니다.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '이벤트 ID(ObjectId)',
+    example: '6694902b254b2569ad704db2',
+    type: String,
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: '이벤트 보상 조회 성공' })
+  @ApiBadRequestResponse({ description: '요청 형식 확인' })
+  @ApiUnauthorizedResponse({ description: '유효하지 않은 인증 토큰' })
+  async getEventRewards(
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
+  ): Promise<GetEventRewardsResponse> {
+    return await firstValueFrom<GetEventRewardsResponse>(
+      this.eventClient.send(EVENT_PATTERNS.GET_REWARDS, id.toString()),
+    );
+  }
+
+  @Put(':id/rewards')
+  @UseGuards(JwtGuard, RoleGuard)
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({
+    summary: '이벤트 보상 수정',
+    description: '이벤트 보상을 수정합니다.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '이벤트 ID(ObjectId)',
+    example: '6694902b254b2569ad704db2',
+    type: String,
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: '이벤트 보상 수정 성공' })
+  @ApiBadRequestResponse({ description: '요청 형식 확인' })
+  @ApiUnauthorizedResponse({ description: '유효하지 않은 인증 토큰' })
+  @ApiForbiddenResponse({
+    description: '해당 작업에 대한 권한 없음(ADMIN/OPERATOR 권한 필요)',
+  })
+  async updateEventRewards(
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
+    @Body() updateEventRewardsRequestDto: UpdateEventRewardsRequestDto,
+  ): Promise<UpdateEventRewardsResponseDto> {
+    return await firstValueFrom<UpdateEventRewardsResponseDto>(
+      this.eventClient.send(EVENT_PATTERNS.UPDATE_REWARDS, {
+        eventId: id.toString(),
+        rewards: updateEventRewardsRequestDto.rewards,
+      } as UpdateEventRewardsRequestDto),
+    );
   }
 }

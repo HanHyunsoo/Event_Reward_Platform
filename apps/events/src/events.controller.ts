@@ -6,9 +6,12 @@ import {
   CreateEventResponseDto,
   EVENT_PATTERNS,
   FindAllEventRequestDto,
+  FindAllEventResponseDto,
   FindOneEventResponseDto,
+  GetEventRewardsResponse,
+  UpdateEventRewardsRequestDto,
+  UpdateEventRewardsResponseDto,
 } from '@event-reward-platform/protocol';
-import { FindAllEventResponseDto } from '@event-reward-platform/protocol/events/find-all-event-response.dto';
 
 @Controller()
 export class EventsController {
@@ -38,5 +41,19 @@ export class EventsController {
     @Payload() payload: FindAllEventRequestDto,
   ): Promise<FindAllEventResponseDto> {
     return await this.eventsService.findAllEvents(payload);
+  }
+
+  @MessagePattern(EVENT_PATTERNS.GET_REWARDS)
+  async getEventRewards(
+    @Payload() payload: string,
+  ): Promise<GetEventRewardsResponse> {
+    return await this.eventsService.getEventRewards(payload);
+  }
+
+  @MessagePattern(EVENT_PATTERNS.UPDATE_REWARDS)
+  async updateEventRewards(
+    @Payload() payload: UpdateEventRewardsRequestDto,
+  ): Promise<UpdateEventRewardsResponseDto> {
+    return await this.eventsService.updateEventRewards(payload);
   }
 }
