@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { EventDocument } from './schemas/event.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
@@ -25,6 +29,7 @@ import {
   Reward,
 } from './schemas/reward.subschema';
 import { RpcException } from '@nestjs/microservices';
+import { GetEventRewardsResponse } from '@event-reward-platform/protocol/events/get-event-rewards-response';
 
 @Injectable()
 export class EventsService {
@@ -203,6 +208,18 @@ export class EventsService {
         rewardLimit: event.rewardLimit,
         creatorId: event.creatorId,
       })),
+    };
+  }
+
+  async getEventRewards(eventId: string): Promise<GetEventRewardsResponse> {
+    const event = await this.eventModel.findById(eventId);
+
+    if (event == null) {
+      throw new RpcException(new NotFoundException('이벤트 찾을 수 없음'));
+    }
+
+    return {
+      rewards: event.rewards.map((event) => this.convertRewardToDto(event)),
     };
   }
 }
