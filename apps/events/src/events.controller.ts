@@ -9,6 +9,8 @@ import {
   FindAllEventResponseDto,
   FindOneEventResponseDto,
   GetEventRewardsResponse,
+  UpdateEventRewardsRequestDto,
+  UpdateEventRewardsResponseDto,
 } from '@event-reward-platform/protocol';
 
 @Controller()
@@ -46,5 +48,12 @@ export class EventsController {
     @Payload() payload: string,
   ): Promise<GetEventRewardsResponse> {
     return await this.eventsService.getEventRewards(payload);
+  }
+
+  @MessagePattern(EVENT_PATTERNS.UPDATE_REWARDS)
+  async updateEventRewards(
+    @Payload() payload: UpdateEventRewardsRequestDto,
+  ): Promise<UpdateEventRewardsResponseDto> {
+    return await this.eventsService.updateEventRewards(payload);
   }
 }
