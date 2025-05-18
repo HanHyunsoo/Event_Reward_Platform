@@ -40,3 +40,27 @@ export function IsDateAfter(
     });
   };
 }
+
+export function IsAnyEnum(
+  enums: object[],
+  validationOptions?: ValidationOptions,
+) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'isAnyEnum',
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      validator: {
+        validate(value: any, args: ValidationArguments) {
+          return enums.some((enumType) =>
+            Object.values(enumType).includes(value),
+          );
+        },
+        defaultMessage(args: ValidationArguments) {
+          return `${args.property} must be a valid enum value from one of the allowed enums`;
+        },
+      },
+    });
+  };
+}

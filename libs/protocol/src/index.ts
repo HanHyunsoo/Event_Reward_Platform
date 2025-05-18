@@ -15,3 +15,4 @@ export * from './users/update-user-request.dto';
 export * from './users/update-user-resopnse.dto';
 export * from './users/item.enum';
 export * from './users/role.enum';
+export * from './users/coupon.enum';

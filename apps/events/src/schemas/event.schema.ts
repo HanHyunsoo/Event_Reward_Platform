@@ -1,13 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document } from 'mongoose';
-import {
-  ArmorId,
-  ChallengeType,
-  ConsumableId,
-  InventoryItemType,
-  RewardType,
-  WeaponId,
-} from '@event-reward-platform/protocol';
+import { ChallengeType, RewardType } from '@event-reward-platform/protocol';
 import {
   AllItemCountSchema,
   CashGreaterThanOrEqualSchema,
@@ -18,22 +11,16 @@ import {
   ContinuousLoginCountSchema,
   ReturnUserSchema,
   SpecificItemCountSchema,
-} from './challenge.schema';
+} from './challenge.subschema';
+import {
+  CashRewardSchema,
+  CoinRewardSchema,
+  CouponRewardSchema,
+  ItemRewardSchema,
+  Reward,
+} from './reward.subschema';
 
 export type EventDocument = Event & Document;
-
-@Schema({ _id: false })
-export class Reward {
-  @Prop({ required: true, type: String, enum: RewardType })
-  rewardType: RewardType;
-
-  // RewardType.ITEM일 때만 사용
-  @Prop({ type: mongoose.Schema.Types.Mixed })
-  itemInfo?: { type: InventoryItemType; id: WeaponId | ArmorId | ConsumableId };
-
-  @Prop({ required: true, default: 1 })
-  quantity: number;
-}
 
 @Schema({ timestamps: true })
 export class Event {
@@ -93,3 +80,10 @@ EventSchema.path<mongoose.Schema.Types.Subdocument>('challenge').discriminator(
   ChallengeType.특정_아이템_소유_개수,
   SpecificItemCountSchema,
 );
+
+const rewardArray =
+  EventSchema.path<mongoose.Schema.Types.DocumentArray>('rewards');
+rewardArray.discriminator(RewardType.ITEM, ItemRewardSchema);
+rewardArray.discriminator(RewardType.COUPON, CouponRewardSchema);
+rewardArray.discriminator(RewardType.CASH, CashRewardSchema);
+rewardArray.discriminator(RewardType.COIN, CoinRewardSchema);
