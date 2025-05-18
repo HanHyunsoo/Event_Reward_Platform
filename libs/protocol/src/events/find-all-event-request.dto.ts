@@ -16,8 +16,9 @@ export class FindAllEventRequestDto {
   @ApiProperty({
     description: '이벤트 시작 시간(이후부터 조회)',
     example: '2025-01-01T00:00:00.000Z',
+    type: Date,
   })
-  startDate: Date;
+  startDate: Date | string;
 
   @IsOptional()
   @IsBoolean()
@@ -54,5 +55,5 @@ export class FindAllEventRequestDto {
     minimum: 1,
     maximum: 100,
   })
-  count: number = 10;
+  limit: number = 10;
 }

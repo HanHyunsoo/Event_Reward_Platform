@@ -10,6 +10,8 @@ import {
   FindAllEventRequestDto,
   FindAllEventResponseDto,
   FindOneEventResponseDto,
+  GetClaimHistoriesRequestDto,
+  GetClaimHistoriesResponseDto,
   GetEventRewardsResponse,
   UpdateEventRewardsRequestDto,
   UpdateEventRewardsResponseDto,
@@ -68,5 +70,12 @@ export class EventsController {
     @Payload() payload: ClaimEventRewardsRequestDto,
   ): Promise<ClaimEventRewardResponse> {
     return await this.claimHistoriesService.claimEventRewards(payload);
+  }
+
+  @MessagePattern(EVENT_PATTERNS.GET_CLAIM_HISTORIES)
+  async getClaimHistories(
+    @Payload() payload: GetClaimHistoriesRequestDto,
+  ): Promise<GetClaimHistoriesResponseDto> {
+    return await this.claimHistoriesService.getClaimHistories(payload);
   }
 }

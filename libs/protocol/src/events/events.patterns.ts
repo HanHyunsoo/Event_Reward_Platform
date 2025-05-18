@@ -6,4 +6,5 @@ export const EVENT_PATTERNS = {
   UPDATE_REWARDS: 'events.updateRewards',
   GET_REWARDS: 'events.getRewards',
   CLAIM_REWARD: 'events.claimReward',
+  GET_CLAIM_HISTORIES: 'events.getClaimHistories',
 } as const;
