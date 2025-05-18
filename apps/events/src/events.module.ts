@@ -10,6 +10,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Event, EventSchema } from './schemas/event.schema';
 import { ClaimHistory } from './schemas/claim-history.schema';
 import { ClaimHistorySchema } from './schemas/claim-history.schema';
+import { ClaimHistoriesService } from './services/claim-histories.service';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ClaimHistorySchema } from './schemas/claim-history.schema';
   controllers: [EventsController],
   providers: [
     EventsService,
+    ClaimHistoriesService,
     {
       provide: APP_FILTER,
       useClass: MicroServiceExceptionFilter,

@@ -2,12 +2,14 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
   FindOneUserResponseDto,
+  GiveRewardsRequestDto,
   TokenDto,
   USER_PATTERNS,
   UserDto,
 } from '@event-reward-platform/protocol';
 import { CreateOrLoginUserRequestDto } from '@event-reward-platform/protocol/users/create-or-login-user-request.dto';
 import { AuthService } from './services/auth.service';
+import { GiveRewardsResponse } from '@event-reward-platform/protocol/users/give-rewards-response.dto';
 import { UsersService } from './services/users.service';
 
 @Controller()
@@ -60,6 +62,13 @@ export class UsersController {
   async getUserInfo(
     @Payload() payload: string,
   ): Promise<FindOneUserResponseDto> {
-    return await this.usersService.getUserInfo(payload);
+    return await this.usersService.getUserInfoWithValidation(payload);
+  }
+
+  @MessagePattern(USER_PATTERNS.GIVE_REWARDS)
+  async giveRewards(
+    @Payload() payload: GiveRewardsRequestDto,
+  ): Promise<GiveRewardsResponse> {
+    return await this.usersService.giveRewards(payload);
   }
 }

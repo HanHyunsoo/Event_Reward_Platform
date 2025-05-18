@@ -13,6 +13,8 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import {
+  ClaimEventRewardResponse,
+  ClaimEventRewardsRequestDto,
   CreateEventRequestDto,
   CreateEventResponseDto,
   EVENT_PATTERNS,
@@ -40,6 +42,7 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiParam,
+  ApiConflictResponse,
 } from '@nestjs/swagger';
 import { ApiOperation } from '@nestjs/swagger';
 
@@ -240,6 +243,35 @@ export class EventsController {
         eventId: id.toString(),
         rewards: updateEventRewardsRequestDto.rewards,
       } as UpdateEventRewardsRequestDto),
+    );
+  }
+
+  @Post(':id/rewards/claim')
+  @UseGuards(JwtGuard)
+  @ApiOperation({
+    summary: '이벤트 보상 클레임',
+    description: '이벤트 보상을 클레임합니다.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '이벤트 ID(ObjectId)',
+    example: '6694902b254b2569ad704db2',
+    type: String,
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: '이벤트 보상 클레임 성공' })
+  @ApiBadRequestResponse({ description: '요청 형식 확인' })
+  @ApiUnauthorizedResponse({ description: '유효하지 않은 인증 토큰' })
+  @ApiConflictResponse({ description: '이벤트 보상 클레임 실패' })
+  async claimEventRewards(
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
+    @Req() req: Request,
+  ): Promise<ClaimEventRewardResponse> {
+    return await firstValueFrom<ClaimEventRewardResponse>(
+      this.eventClient.send(EVENT_PATTERNS.CLAIM_REWARD, {
+        eventId: id.toString(),
+        userId: (req.user as AccessTokenPayload).userId,
+      } as ClaimEventRewardsRequestDto),
     );
   }
 }
