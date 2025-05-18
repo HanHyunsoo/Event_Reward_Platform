@@ -25,4 +25,4 @@ export class ClaimHistory {
 }
 
 export const ClaimHistorySchema = SchemaFactory.createForClass(ClaimHistory);
-ClaimHistorySchema.index({ updatedAt: -1 });
+ClaimHistorySchema.index({ eventId: 1, userId: 1, updatedAt: -1 });

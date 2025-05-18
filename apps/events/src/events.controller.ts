@@ -2,6 +2,8 @@ import { Body, Controller } from '@nestjs/common';
 import { EventsService } from './services/events.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
+  ClaimEventRewardResponse,
+  ClaimEventRewardsRequestDto,
   CreateEventRequestDto,
   CreateEventResponseDto,
   EVENT_PATTERNS,
@@ -12,10 +14,14 @@ import {
   UpdateEventRewardsRequestDto,
   UpdateEventRewardsResponseDto,
 } from '@event-reward-platform/protocol';
+import { ClaimHistoriesService } from './services/claim-histories.service';
 
 @Controller()
 export class EventsController {
-  constructor(private readonly eventsService: EventsService) {}
+  constructor(
+    private readonly eventsService: EventsService,
+    private readonly claimHistoriesService: ClaimHistoriesService,
+  ) {}
 
   @MessagePattern(EVENT_PATTERNS.HEALTH_CHECK)
   async healthCheck(): Promise<string> {
@@ -55,5 +61,12 @@ export class EventsController {
     @Payload() payload: UpdateEventRewardsRequestDto,
   ): Promise<UpdateEventRewardsResponseDto> {
     return await this.eventsService.updateEventRewards(payload);
+  }
+
+  @MessagePattern(EVENT_PATTERNS.CLAIM_REWARD)
+  async claimEventRewards(
+    @Payload() payload: ClaimEventRewardsRequestDto,
+  ): Promise<ClaimEventRewardResponse> {
+    return await this.claimHistoriesService.claimEventRewards(payload);
   }
 }
