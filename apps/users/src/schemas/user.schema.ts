@@ -10,7 +10,7 @@ import {
 
 export type UserDocument = User & Document;
 
-@Schema()
+@Schema({ _id: false })
 export class InventoryItem {
   @Prop({ required: true, type: String, enum: InventoryItemType })
   type: InventoryItemType;
@@ -22,7 +22,7 @@ export class InventoryItem {
   quantity: number;
 }
 
-@Schema()
+@Schema({ _id: false })
 export class ConsecutiveLogin {
   @Prop({ required: true, default: new Date() })
   startTime: Date;

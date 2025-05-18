@@ -50,7 +50,11 @@ import { PassportModule } from '@nestjs/passport';
     },
     {
       provide: APP_PIPE,
-      useClass: ValidationPipe,
+      useFactory: () =>
+        new ValidationPipe({
+          transform: true,
+          whitelist: true,
+        }),
     },
     JwtStrategy,
   ],
