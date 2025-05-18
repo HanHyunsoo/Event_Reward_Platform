@@ -33,53 +33,57 @@ export class EventsService {
   ) {}
 
   private convertRewardToDto(reward: Reward): RewardDto {
-    if (reward instanceof ItemReward) {
-      const itemInfo: ItemInfoDto = {
-        type: reward.itemType,
-      };
-      if (reward.itemType === InventoryItemType.WEAPON) {
-        itemInfo.weaponId = reward.itemId as WeaponId;
+    switch (reward.rewardType) {
+      case RewardType.ITEM: {
+        const itemReward = reward as ItemReward;
+
+        const itemInfo: ItemInfoDto = {
+          type: itemReward.itemType,
+        };
+        if (itemReward.itemType === InventoryItemType.WEAPON) {
+          itemInfo.weaponId = itemReward.itemId as WeaponId;
+        } else if (itemReward.itemType === InventoryItemType.ARMOR) {
+          itemInfo.armorId = itemReward.itemId as ArmorId;
+        } else if (itemReward.itemType === InventoryItemType.CONSUMABLE) {
+          itemInfo.consumableId = itemReward.itemId as ConsumableId;
+        }
+        return {
+          rewardType: reward.rewardType,
+          itemInfo,
+          quantity: reward.quantity,
+        } as RewardDto;
       }
-      if (reward.itemType === InventoryItemType.ARMOR) {
-        itemInfo.armorId = reward.itemId as ArmorId;
+      case RewardType.COUPON: {
+        const couponReward = reward as CouponReward;
+
+        return {
+          rewardType: couponReward.rewardType,
+          couponId: couponReward.couponId,
+          quantity: couponReward.quantity,
+        } as RewardDto;
       }
-      if (reward.itemType === InventoryItemType.CONSUMABLE) {
-        itemInfo.consumableId = reward.itemId as ConsumableId;
+      case RewardType.CASH: {
+        const cashReward = reward as CashReward;
+
+        return {
+          rewardType: cashReward.rewardType,
+          quantity: cashReward.quantity,
+        } as RewardDto;
       }
+      case RewardType.COIN: {
+        const coinReward = reward as CoinReward;
 
-      return {
-        rewardType: reward.rewardType,
-        itemInfo,
-        quantity: reward.quantity,
-      } as RewardDto;
+        return {
+          rewardType: coinReward.rewardType,
+          quantity: coinReward.quantity,
+        } as RewardDto;
+      }
+      default:
+        return {
+          rewardType: reward.rewardType,
+          quantity: reward.quantity,
+        } as RewardDto;
     }
-
-    if (reward instanceof CouponReward) {
-      return {
-        rewardType: reward.rewardType,
-        couponId: reward.couponId,
-        quantity: reward.quantity,
-      } as RewardDto;
-    }
-
-    if (reward instanceof CashReward) {
-      return {
-        rewardType: reward.rewardType,
-        quantity: reward.quantity,
-      } as RewardDto;
-    }
-
-    if (reward instanceof CoinReward) {
-      return {
-        rewardType: reward.rewardType,
-        quantity: reward.quantity,
-      } as RewardDto;
-    }
-
-    return {
-      rewardType: reward.rewardType,
-      quantity: reward.quantity,
-    };
   }
 
   private convertRewardDtoToReward(rewardDto: RewardDto): Reward {
@@ -185,7 +189,7 @@ export class EventsService {
         startTime: { $gte: startDate },
         isPublic: isPublic,
       })
-      .sort({ startTime: -1 })
+      .sort({ startTime: 1 })
       .limit(count);
 
     return {
