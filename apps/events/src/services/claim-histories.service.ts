@@ -220,23 +220,26 @@ export class ClaimHistoriesService {
     switch (filter) {
       case ClaimHistoryFilter.ALL:
         query = {
-          updatedAt: { $gte: timeAt },
+          updatedAt: { $lte: timeAt },
         };
         break;
       case ClaimHistoryFilter.EVENT_ID:
         query = {
           eventId,
+          updatedAt: { $lte: timeAt },
         };
         break;
       case ClaimHistoryFilter.USER_ID:
         query = {
           userId,
+          updatedAt: { $lte: timeAt },
         };
         break;
       case ClaimHistoryFilter.EVENT_ID_AND_USER_ID:
         query = {
           eventId,
           userId,
+          updatedAt: { $lte: timeAt },
         };
         break;
       default:
@@ -244,10 +247,7 @@ export class ClaimHistoriesService {
     }
 
     const claimHistories = await this.claimHistoryModel
-      .find({
-        ...query,
-        updatedAt: { $gte: timeAt },
-      })
+      .find(query)
       .sort({ updatedAt: -1 })
       .limit(limit);
 
