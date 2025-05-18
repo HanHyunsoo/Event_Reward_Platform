@@ -19,6 +19,8 @@ import {
   ArmorId,
   ConsumableId,
   ItemInfoDto,
+  UpdateEventRewardsRequestDto,
+  UpdateEventRewardsResponseDto,
 } from '@event-reward-platform/protocol';
 import { FindAllEventResponseDto } from '@event-reward-platform/protocol/events/find-all-event-response.dto';
 import {
@@ -217,6 +219,27 @@ export class EventsService {
     if (event == null) {
       throw new RpcException(new NotFoundException('이벤트 찾을 수 없음'));
     }
+
+    return {
+      rewards: event.rewards.map((event) => this.convertRewardToDto(event)),
+    };
+  }
+
+  async updateEventRewards(
+    updateEventRewardsRequestDto: UpdateEventRewardsRequestDto,
+  ): Promise<UpdateEventRewardsResponseDto> {
+    const { eventId, rewards } = updateEventRewardsRequestDto;
+
+    const event = await this.eventModel.findById(eventId);
+
+    if (event == null) {
+      throw new RpcException(new NotFoundException('이벤트 찾을 수 없음'));
+    }
+
+    event.rewards = rewards.map((reward) =>
+      this.convertRewardDtoToReward(reward),
+    );
+    await event.save();
 
     return {
       rewards: event.rewards.map((event) => this.convertRewardToDto(event)),
