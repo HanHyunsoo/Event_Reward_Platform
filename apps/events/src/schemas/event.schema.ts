@@ -37,7 +37,7 @@ export class Reward {
 
 @Schema({ timestamps: true })
 export class Event {
-  @Prop({ required: true })
+  @Prop({ required: true, index: 1 })
   startTime: Date;
 
   @Prop({ required: true })
