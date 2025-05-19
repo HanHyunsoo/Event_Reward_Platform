@@ -23,7 +23,7 @@ describe('EventsController (e2e)', () => {
   });
 
   describe('이벤트 보상 수령(POST /events/:id/reward-claims)', () => {
-    it('유저가 보상 수령 요청을 동시에 여러번 보내면 하나만 처리된다.', async () => {
+    it('유저가 보상 수령 요청을 동시에 여러번 보내면 하나만 처리된다,', async () => {
       // given
       const adminLoginResponse = await request(app.getHttpServer())
         .post('/users/login')

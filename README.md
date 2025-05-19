@@ -1,98 +1,85 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 이벤트/보상 관리 플랫폼
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 필요한 기술 스택
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+* Node 18
+* Docker & Docker Compose
 
-## Description
+## 실행 방법
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+```shell
+# 1. 의존성 설치
+npm install
 
-## Project setup
+# 2. 프로젝트 빌드
+npm run build:all
 
-```bash
-$ npm install
+# 3. Docker 컨테이너 실행
+docker compose up -d
+
+# 4. Docker 컨테이너 종료
+docker compose down -v
 ```
 
-## Compile and run the project
+위 명령어를 이용하여 도커 환경을 만들어주세요.
 
-```bash
-# development
-$ npm run start
+정상적으로 도커 환경이 만들어지면 아래와 같은 컨테이너 6개가 생성됩니다.
 
-# watch mode
-$ npm run start:dev
+1. MongoDB(Primary)
+2. MongoDB(Secondary - 1)
+3. MongoDB(Secondary - 2)
+4. API(api-gateway)
+5. API(user-service)
+6. API(event-service)
 
-# production mode
-$ npm run start:prod
-```
+서버 실행 후 아래 링크로 API 문서를 확인할 수 있습니다.
 
-## Run tests
+* http://localhost:3000/api-docs
 
-```bash
-# unit tests
-$ npm run test
+## 서버 구조
 
-# e2e tests
-$ npm run test:e2e
+![서버 구조도](./docs/server-architecture.drawio.png)
 
-# test coverage
-$ npm run test:cov
-```
+Docker를 이용하여 서버를 구축하면 위와 같은 구조로 구성됩니다.
 
-## Deployment
+실제 운영 환경에서는 각 서비스(user-service, event-service)별로 독립적인 MongoDB Cluster가 구성되어야 하지만, 개발 환경의 편의성을 위해 단일 MongoDB Cluster로 통합하여 구성했습니다.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## 주요 기술적 도전과 해결
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 이벤트 보상 중복 지급 방지 구현
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+- **문제**: 동일 유저의 이벤트 보상 지급 요청이 동시에 발생할 경우 중복 지급 문제 발생
+- **해결**:
+  - MongoDB 트랜잭션을 활용한 원자적 연산 구현
+    - 트랜잭션 실패 시 자동 롤백 처리
+    - 이벤트 보상 지급과 이력 생성의 원자적 처리
+    - [관련 로직](/apps/events/src/services/claim-histories.service.ts#L53)
+  - 분산락 구현을 통한 동시성 제어
+    - MongoDB TTL 인덱스(60초 만료)를 활용한 분산락 구현
+    - Lock 알고리즘을 이용하여 원자적 보상 지급 보장
+    - [관련 스키마](/apps/events/src/schemas/lock.schema.ts#L1), [관련 로직](/apps/events/src/services/claim-histories.service.ts#L61)
+  - 동시성 테스트를 통한 검증
+    - 락 획득 실패 시 적절한 에러 처리 검증
+    - [관련 테스트 코드](/apps/api-gateway/test/events.e2e-spec.ts#L26)
+- **개선 방안**
+  - Redis를 활용한 분산락 구현으로 성능 개선
+  - 멱등성 보장(현재 로직은 409 에러 반환)
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 확장성 있는 이벤트 도전과제 구축
 
-## Resources
+- **문제**: 다양한 유형의 도전 과제(로그인 횟수, 아이템 보유, 캐시/코인 보유 등)를 유연하게 처리해야 함
+- **해결**:
+  - MongoDB Discriminator를 활용한 스키마 설계
+    - 도전 과제 타입별 독립적인 [스키마](/apps/events/src/schemas/challenge.subschema.ts) 정의
+  - 타입 안전성 보장
+    - DTO 레벨에서의 [유효성 검사](/libs/protocol/src/events/event.dto.ts#L23)
+    - 도전 과제 타입별 [충족 조건 검증](/apps/events/src/services/claim-histories.service.ts#L166) 로직 구현
 
-Check out a few resources that may come in handy when working with NestJS:
+## 비고
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+  - Node 18 버전과 호환되는 NestJS 관련 라이브러리들을 사용했습니다. (11.x 버전은 지원하지 않습니다)
+  - 테스트 코드 실행은 앞서 언급한 도커 환경을 구축한 후 `npm run test:e2e` 명령어를 입력해주세요.
+  - 도커 환경이 아닌 로컬 환경에서 서버를 구축하고 싶으시다면 아래 단계를 따라주세요:
+    1. 유닉스 계열인 경우 `/etc/hosts` 파일, 윈도우 계열인 경우 `C:\Windows\System32\drivers\etc\hosts` 파일을 열어 `127.0.0.1`에 `mongo1, mongo2, mongo3`를 추가하여 루프백을 설정해주세요.
+    2. `docker compose -f docker-compose.only-mongodb.yml up -d` 명령어를 이용하여 MongoDB Cluster 환경을 구축해주세요.
+    3. `npm run start:all:dev` 명령어로 3개의 서버를 실행해주세요.
