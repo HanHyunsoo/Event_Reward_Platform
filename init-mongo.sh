@@ -1,4 +1,5 @@
 #!/bin/bash
+chmod 600 /etc/mongodb.key
 set -e
 
 mongosh <<'EOF'
