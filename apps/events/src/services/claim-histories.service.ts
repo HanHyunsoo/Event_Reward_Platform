@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Model } from 'mongoose';
+import { Connection, FilterQuery, Model } from 'mongoose';
 import { ClaimHistoryDocument } from '../schemas/claim-history.schema';
 import { ClaimHistory } from '../schemas/claim-history.schema';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -20,6 +20,9 @@ import {
   GiveRewardsResponse,
   ChallengeType,
   AllUserDto,
+  GetClaimHistoriesResponseDto,
+  GetClaimHistoriesRequestDto,
+  ClaimHistoryFilter,
 } from '@event-reward-platform/protocol';
 import { firstValueFrom } from 'rxjs';
 import { EventDocument } from '../schemas/event.schema';
@@ -89,8 +92,10 @@ export class ClaimHistoriesService {
       eventId,
       userId,
       status: ClaimStatus.PROCESSING,
+      updatedAt: { $lte: new Date(Date.now() - 1000 * 60) },
     });
 
+    // 1분 이내에 같은 이벤트에 대해 동시 요청이라 판단되면 실패 처리
     if (isProcessing) {
       await this.claimHistoryModel.create({
         eventId,
@@ -205,5 +210,58 @@ export class ClaimHistoriesService {
       default:
         return false;
     }
+  }
+
+  async getClaimHistories(
+    getClaimHistoriesRequestDto: GetClaimHistoriesRequestDto,
+  ): Promise<GetClaimHistoriesResponseDto> {
+    const { timeAt, eventId, limit, userId, filter } =
+      getClaimHistoriesRequestDto;
+
+    let query: FilterQuery<ClaimHistoryDocument> = {};
+    switch (filter) {
+      case ClaimHistoryFilter.ALL:
+        query = {
+          updatedAt: { $lte: timeAt },
+        };
+        break;
+      case ClaimHistoryFilter.EVENT_ID:
+        query = {
+          eventId,
+          updatedAt: { $lte: timeAt },
+        };
+        break;
+      case ClaimHistoryFilter.USER_ID:
+        query = {
+          userId,
+          updatedAt: { $lte: timeAt },
+        };
+        break;
+      case ClaimHistoryFilter.EVENT_ID_AND_USER_ID:
+        query = {
+          eventId,
+          userId,
+          updatedAt: { $lte: timeAt },
+        };
+        break;
+      default:
+        throw new BadRequestException('잘못된 필터입니다.');
+    }
+
+    const claimHistories = await this.claimHistoryModel
+      .find(query)
+      .sort({ updatedAt: -1 })
+      .limit(limit);
+
+    return {
+      claimHistories: claimHistories.map((claimHistory) => ({
+        eventId: claimHistory.eventId,
+        userId: claimHistory.userId,
+        status: claimHistory.status,
+        failureCause: claimHistory.failureCause,
+        createdAt: claimHistory.get('createdAt') as Date,
+        updatedAt: claimHistory.get('updatedAt') as Date,
+      })),
+    };
   }
 }
