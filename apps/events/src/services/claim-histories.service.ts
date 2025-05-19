@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  GoneException,
   Inject,
   Injectable,
   NotFoundException,
@@ -13,7 +14,7 @@ import { ClaimHistory } from '../schemas/claim-history.schema';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import {
   ClaimEventRewardsRequestDto,
-  ClaimEventRewardResponse,
+  ClaimEventRewardResponseDto,
   USER_PATTERNS,
   FindOneUserResponseDto,
   ClaimStatus,
@@ -36,6 +37,7 @@ import {
   ReturnUser,
   SpecificItemCount,
 } from '../schemas/challenge.subschema';
+import { Lock, LockDocument } from '../schemas/lock.schema';
 
 @Injectable()
 export class ClaimHistoriesService {
@@ -43,91 +45,63 @@ export class ClaimHistoriesService {
     @InjectModel(Event.name) private readonly eventModel: Model<EventDocument>,
     @InjectModel(ClaimHistory.name)
     private claimHistoryModel: Model<ClaimHistoryDocument>,
+    @InjectModel(Lock.name) private lockModel: Model<LockDocument>,
     @InjectConnection() private readonly connection: Connection,
     @Inject('USERS_SERVICE') private readonly userClient: ClientProxy,
   ) {}
 
   async claimEventRewards(
     claimEventRewardsRequestDto: ClaimEventRewardsRequestDto,
-  ): Promise<ClaimEventRewardResponse> {
+  ): Promise<ClaimEventRewardResponseDto> {
     const { eventId, userId } = claimEventRewardsRequestDto;
-
-    const { user } = await firstValueFrom<FindOneUserResponseDto>(
-      this.userClient.send(USER_PATTERNS.GET_USER_INFO, userId),
-    );
-
-    const event = await this.eventModel.findById(eventId);
-
-    if (event == null || !event.isPublic) {
-      throw new RpcException(
-        new NotFoundException('이벤트를 찾을 수 없습니다.'),
-      );
-    }
-
-    if (event.endTime.getTime() < Date.now()) {
-      throw new RpcException(
-        new BadRequestException('이벤트가 종료되었습니다.'),
-      );
-    }
-
-    if (event.rewardLimit != null && event.rewardLimit === 0) {
-      throw new RpcException(
-        new BadRequestException('이벤트 보상 지급이 모두 소진되었습니다.'),
-      );
-    }
-
-    const isClaimed = await this.claimHistoryModel.exists({
-      eventId,
-      userId,
-      status: ClaimStatus.CLAIMED,
-    });
-
-    if (isClaimed) {
-      throw new RpcException(
-        new ConflictException('이미 보상을 지급받았습니다.'),
-      );
-    }
-
-    const isProcessing = await this.claimHistoryModel.exists({
-      eventId,
-      userId,
-      status: ClaimStatus.PROCESSING,
-      updatedAt: { $lte: new Date(Date.now() - 1000 * 60) },
-    });
-
-    // 1분 이내에 같은 이벤트에 대해 동시 요청이라 판단되면 실패 처리
-    if (isProcessing) {
-      await this.claimHistoryModel.create({
-        eventId,
-        userId,
-        status: ClaimStatus.CLAIM_FAILED,
-        failureCause: '다른 요청에서 보상을 지급받고 있습니다.',
-      });
-      throw new RpcException(
-        new ConflictException('다른 요청에서 보상을 지급받고 있습니다.'),
-      );
-    }
-
-    const claimHistory = await this.claimHistoryModel.create({
-      eventId,
-      userId,
-      status: ClaimStatus.PROCESSING,
-    });
-
-    if (!this.checkChallenge(user, event.challenge)) {
-      claimHistory.status = ClaimStatus.CLAIM_FAILED;
-      claimHistory.failureCause = '도전 과제를 달성하지 못했습니다.';
-      await claimHistory.save();
-
-      throw new RpcException(
-        new ForbiddenException('도전 과제를 달성하지 못했습니다.'),
-      );
-    }
 
     const session = await this.connection.startSession();
     session.startTransaction();
 
+    let lock: LockDocument | null = null;
+
     try {
+      lock = await this.lockModel.create({ key: `${eventId}:${userId}` });
+
+      const event = await this.eventModel.findById(eventId, null, {
+        session,
+      });
+
+      if (event == null || !event.isPublic) {
+        throw new NotFoundException('이벤트를 찾을 수 없습니다.');
+      }
+
+      if (event.endTime.getTime() < Date.now()) {
+        throw new ForbiddenException('이벤트가 종료되었습니다.');
+      }
+
+      if (event.rewardLimit != null && event.rewardLimit === 0) {
+        throw new GoneException('이벤트 보상 지급이 모두 소진되었습니다.');
+      }
+
+      const isClaimed =
+        (await this.claimHistoryModel.findOne(
+          {
+            eventId,
+            userId,
+            status: ClaimStatus.CLAIMED,
+          },
+          { _id: 1 },
+          { session },
+        )) != null;
+
+      if (isClaimed) {
+        throw new ConflictException('이미 보상을 지급받았습니다.');
+      }
+
+      const { user } = await firstValueFrom<FindOneUserResponseDto>(
+        this.userClient.send(USER_PATTERNS.GET_USER_INFO, userId),
+      );
+
+      if (!this.checkChallenge(user, event.challenge)) {
+        throw new ForbiddenException('도전 과제를 달성하지 못했습니다.');
+      }
+
       if (event.rewardLimit != null) {
         const updatedEvent = await this.eventModel.findOneAndUpdate(
           { _id: eventId },
@@ -140,12 +114,16 @@ export class ClaimHistoriesService {
         );
 
         if (updatedEvent && updatedEvent.rewardLimit < 0) {
-          throw new RpcException(
-            new ConflictException('이벤트 보상 지급이 모두 소진되었습니다.'),
-          );
+          throw new GoneException('이벤트 보상 지급이 모두 소진되었습니다.');
         }
       }
+      await session.commitTransaction();
 
+      await this.claimHistoryModel.create({
+        eventId,
+        userId,
+        status: ClaimStatus.CLAIMED,
+      });
       const { user: updatedUser } = await firstValueFrom<GiveRewardsResponse>(
         this.userClient.send(USER_PATTERNS.GIVE_REWARDS, {
           userId,
@@ -153,21 +131,35 @@ export class ClaimHistoriesService {
         }),
       );
 
-      claimHistory.status = ClaimStatus.CLAIMED;
-      await session.commitTransaction();
-
       return {
         user: updatedUser,
       };
     } catch (error) {
+      let failureCause = 'Unknown error';
+      let throwError: Error = error as Error;
+
+      if (error instanceof Error && 'code' in error && error?.code === 11000) {
+        failureCause = '다른 요청에서 보상을 받고 있습니다';
+        throwError = new ConflictException(failureCause);
+        throwError.stack = error.stack;
+      } else {
+        failureCause = error instanceof Error ? error.message : String(error);
+      }
+
       await session.abortTransaction();
-      claimHistory.status = ClaimStatus.CLAIM_FAILED;
-      claimHistory.failureCause =
-        error instanceof Error ? error.message : String(error);
-      await claimHistory.save();
-      throw error;
+      await this.claimHistoryModel.create({
+        eventId,
+        userId,
+        status: ClaimStatus.CLAIM_FAILED,
+        failureCause,
+      });
+
+      throw new RpcException(throwError);
     } finally {
       await session.endSession();
+      if (lock != null) {
+        await lock.deleteOne();
+      }
     }
   }
 

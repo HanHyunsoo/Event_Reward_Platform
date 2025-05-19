@@ -2,7 +2,7 @@ import { Body, Controller } from '@nestjs/common';
 import { EventsService } from './services/events.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
-  ClaimEventRewardResponse,
+  ClaimEventRewardResponseDto,
   ClaimEventRewardsRequestDto,
   CreateEventRequestDto,
   CreateEventResponseDto,
@@ -68,7 +68,7 @@ export class EventsController {
   @MessagePattern(EVENT_PATTERNS.CLAIM_REWARD)
   async claimEventRewards(
     @Payload() payload: ClaimEventRewardsRequestDto,
-  ): Promise<ClaimEventRewardResponse> {
+  ): Promise<ClaimEventRewardResponseDto> {
     return await this.claimHistoriesService.claimEventRewards(payload);
   }
 

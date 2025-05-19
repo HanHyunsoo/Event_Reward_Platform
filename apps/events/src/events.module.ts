@@ -11,6 +11,7 @@ import { Event, EventSchema } from './schemas/event.schema';
 import { ClaimHistory } from './schemas/claim-history.schema';
 import { ClaimHistorySchema } from './schemas/claim-history.schema';
 import { ClaimHistoriesService } from './services/claim-histories.service';
+import { Lock, LockSchema } from './schemas/lock.schema';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ClaimHistoriesService } from './services/claim-histories.service';
     MongooseModule.forFeature([
       { name: Event.name, schema: EventSchema },
       { name: ClaimHistory.name, schema: ClaimHistorySchema },
+      { name: Lock.name, schema: LockSchema },
     ]),
   ],
   controllers: [EventsController],

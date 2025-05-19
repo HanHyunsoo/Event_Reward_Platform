@@ -16,7 +16,6 @@ export class ClaimHistory {
     required: true,
     type: String,
     enum: ClaimStatus,
-    default: ClaimStatus.PROCESSING,
   })
   status: ClaimStatus;
 

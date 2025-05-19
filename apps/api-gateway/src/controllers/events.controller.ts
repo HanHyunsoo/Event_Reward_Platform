@@ -13,7 +13,7 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import {
-  ClaimEventRewardResponse,
+  ClaimEventRewardResponseDto,
   ClaimEventRewardsRequestDto,
   ClaimHistoryFilter,
   CreateEventRequestDto,
@@ -31,11 +31,13 @@ import {
   UpdateEventRewardsResponseDto,
 } from '@event-reward-platform/protocol';
 import { Request } from 'express';
-import { AccessTokenPayload } from '@event-reward-platform/core';
+import {
+  AccessTokenPayload,
+  ParseObjectIdPipe,
+} from '@event-reward-platform/core';
 import { JwtGuard } from '../auth/jwt.guard';
 import { RoleGuard } from '../auth/role.guard';
 import { Roles } from '../decorators/roles.decorator';
-import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import {
   ApiBearerAuth,
@@ -308,8 +310,8 @@ export class EventsController {
   async claimEventRewards(
     @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
     @Req() req: Request,
-  ): Promise<ClaimEventRewardResponse> {
-    return await firstValueFrom<ClaimEventRewardResponse>(
+  ): Promise<ClaimEventRewardResponseDto> {
+    return await firstValueFrom<ClaimEventRewardResponseDto>(
       this.eventClient.send(EVENT_PATTERNS.CLAIM_REWARD, {
         eventId: id.toString(),
         userId: (req.user as AccessTokenPayload).userId,

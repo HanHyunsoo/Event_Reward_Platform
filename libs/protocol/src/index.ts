@@ -12,7 +12,7 @@ export * from './events/reward.enum';
 export * from './events/challenge.enum';
 export * from './events/claim-status.enum';
 export * from './events/claim-event-rewards-request.dto';
-export * from './events/claim-event-reward-response';
+export * from './events/claim-event-reward-response.dto';
 export * from './events/get-claim-histories-request.dto';
 export * from './events/get-claim-histories-response.dto';
 export * from './events/claim-history.dto';
