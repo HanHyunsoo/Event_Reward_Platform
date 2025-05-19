@@ -61,6 +61,72 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=root
 
+  api-gateway:
+    image: node:18-alpine
+    working_dir: /app
+    env_file:
+      - .env
+    ports:
+      - 3000:3000
+    environment:
+      - USER_SERVICE_HOST=users
+      - EVENT_SERVICE_HOST=events
+    networks:
+      - mongo-cluster
+    volumes:
+      - ./node_modules:/app/node_modules
+      - ./dist/apps/api-gateway/main.js:/app/main.js
+    command: 'node main.js'
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      users:
+        condition: service_started
+      events:
+        condition: service_started
+
+  users:
+    image: node:18-alpine
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      - USER_SERVICE_MONGO_URL=mongodb://user:user@mongo1,mongo2,mongo3/user_service?replicaSet=replDb&authSource=admin
+      - USER_SERVICE_HOST=0.0.0.0
+      - EVENT_SERVICE_HOST=events
+    ports:
+      - 3001:3001
+    networks:
+      - mongo-cluster
+    volumes:
+      - ./node_modules:/app/node_modules
+      - ./dist/apps/users/main.js:/app/main.js
+    command: 'node main.js'
+    depends_on:
+      mongo1:
+        condition: service_healthy
+
+  events:
+    image: node:18-alpine
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      - EVENT_SERVICE_MONGO_URL=mongodb://event:event@mongo1,mongo2,mongo3/event_service?replicaSet=replDb&authSource=admin
+      - EVENT_SERVICE_HOST=0.0.0.0
+      - USER_SERVICE_HOST=users
+    ports:
+      - 3002:3002
+    networks:
+      - mongo-cluster
+    volumes:
+      - ./node_modules:/app/node_modules
+      - ./dist/apps/events/main.js:/app/main.js
+    command: 'node main.js'
+    depends_on:
+      mongo1:
+        condition: service_healthy
+
 networks:
   mongo-cluster:
     driver: bridge

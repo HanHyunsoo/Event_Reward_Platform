@@ -6,7 +6,10 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build:api-gateway": "nest build api-gateway",
+    "build:users": "nest build users",
+    "build:events": "nest build events",
+    "build:all": "npm run build:api-gateway & npm run build:users & npm run build:events",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start:gateway:dev": "nest start --watch gateway",
     "start:gateway:debug": "nest start --debug --watch gateway",

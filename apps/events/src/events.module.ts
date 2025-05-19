@@ -25,6 +25,7 @@ import { Lock, LockSchema } from './schemas/lock.schema';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
+            host: configService.get('USER_SERVICE_HOST', 'localhost'),
             port: configService.get('USER_SERVICE_PORT', 3001),
           },
         }),

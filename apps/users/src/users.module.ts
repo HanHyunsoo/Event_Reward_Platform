@@ -22,6 +22,7 @@ import { User, UserSchema } from './schemas/user.schema';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
+            host: configService.get('EVENT_SERVICE_HOST', 'localhost'),
             port: configService.get('EVENT_SERVICE_PORT', 3002),
           },
         }),

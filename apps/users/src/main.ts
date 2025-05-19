@@ -7,7 +7,10 @@ async function bootstrap() {
     UsersModule,
     {
       transport: Transport.TCP,
-      options: { port: parseInt(process.env.USER_SERVICE_PORT ?? '3001') },
+      options: {
+        host: process.env.USER_SERVICE_HOST ?? 'localhost',
+        port: parseInt(process.env.USER_SERVICE_PORT ?? '3001'),
+      },
     },
   );
 

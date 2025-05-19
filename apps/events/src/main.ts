@@ -7,7 +7,10 @@ async function bootstrap() {
     EventsModule,
     {
       transport: Transport.TCP,
-      options: { port: parseInt(process.env.EVENT_SERVICE_PORT ?? '3002') },
+      options: {
+        host: process.env.EVENT_SERVICE_HOST ?? 'localhost',
+        port: parseInt(process.env.EVENT_SERVICE_PORT ?? '3002'),
+      },
     },
   );
   await app.listen();

@@ -23,6 +23,7 @@ import { PassportModule } from '@nestjs/passport';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
+            host: configService.get('USER_SERVICE_HOST', 'localhost'),
             port: configService.get('USER_SERVICE_PORT', 3001),
           },
         }),
@@ -33,6 +34,7 @@ import { PassportModule } from '@nestjs/passport';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
+            host: configService.get('EVENT_SERVICE_HOST', 'localhost'),
             port: configService.get('EVENT_SERVICE_PORT', 3002),
           },
         }),
