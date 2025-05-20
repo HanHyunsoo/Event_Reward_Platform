@@ -8,16 +8,10 @@
 ## 실행 방법
 
 ```shell
-# 1. 의존성 설치
-npm install
+# 1. Docker Compose 실행
+docker compose up --build -d
 
-# 2. 프로젝트 빌드
-npm run build:all
-
-# 3. Docker 컨테이너 실행
-docker compose up -d
-
-# 4. Docker 컨테이너 종료
+# 2. Docker Compose 종료(모든 데이터 삭제되므로 주의)
 docker compose down -v
 ```
 
