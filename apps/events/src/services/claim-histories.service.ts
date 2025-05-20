@@ -117,19 +117,24 @@ export class ClaimHistoriesService {
           throw new GoneException('이벤트 보상 지급이 모두 소진되었습니다.');
         }
       }
-      await session.commitTransaction();
 
-      await this.claimHistoryModel.create({
-        eventId,
-        userId,
-        status: ClaimStatus.CLAIMED,
-      });
+      await this.claimHistoryModel.create(
+        {
+          eventId,
+          userId,
+          status: ClaimStatus.CLAIMED,
+        },
+        { session },
+      );
+
       const { user: updatedUser } = await firstValueFrom<GiveRewardsResponse>(
         this.userClient.send(USER_PATTERNS.GIVE_REWARDS, {
           userId,
           rewards: event.rewards.map((reward) => convertRewardToDto(reward)),
         }),
       );
+
+      await session.commitTransaction();
 
       return {
         user: updatedUser,

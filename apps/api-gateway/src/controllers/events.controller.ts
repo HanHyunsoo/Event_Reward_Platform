@@ -48,6 +48,7 @@ import {
   ApiOkResponse,
   ApiParam,
   ApiConflictResponse,
+  ApiGoneResponse,
 } from '@nestjs/swagger';
 import { ApiOperation } from '@nestjs/swagger';
 
@@ -304,8 +305,14 @@ export class EventsController {
   @ApiOkResponse({ description: '이벤트 보상 지급 성공' })
   @ApiBadRequestResponse({ description: '요청 형식 확인' })
   @ApiUnauthorizedResponse({ description: '유효하지 않은 인증 토큰' })
+  @ApiForbiddenResponse({
+    description: '이벤트 도전 과제 미충족 or 종료됨',
+  })
   @ApiConflictResponse({
     description: '이벤트 보상 지급 실패(중복 수령, 선착순 마감, 중복 요청)',
+  })
+  @ApiGoneResponse({
+    description: '선착순 마감으로 인한 보상 지급 실패',
   })
   async claimEventRewards(
     @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
