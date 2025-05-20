@@ -69,7 +69,7 @@ Docker를 이용하여 서버를 구축하면 위와 같은 구조로 구성됩�
 
 - **문제**: 다양한 유형의 도전 과제(로그인 횟수, 아이템 보유, 캐시/코인 보유 등)를 유연하게 처리해야 함
 - **해결**:
-  - MongoDB Discriminator를 활용한 스키마 설계
+  - Mongoose Discriminator를 활용한 스키마 설계
     - 도전 과제 타입별 독립적인 [스키마](/apps/events/src/schemas/challenge.subschema.ts) 정의
   - 타입 안전성 보장
     - DTO 레벨에서의 [유효성 검사](/libs/protocol/src/events/event.dto.ts#L23)
